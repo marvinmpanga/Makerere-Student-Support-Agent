@@ -152,7 +152,7 @@ DEFAULT_THREAT_RULES: tuple[ThreatRule, ...] = (
     ),
 )
 
-_BASE64_CANDIDATE_RE = re.compile(r"\b[A-Za-z0-9+/]{24,}={0,2}\b")
+_BASE64_CANDIDATE_RE = re.compile(r"(?<![A-Za-z0-9+/])[A-Za-z0-9+/]{20,}={0,2}(?![A-Za-z0-9+/=])")
 _CONTROL_CHARS_RE = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]")
 
 OUTPUT_FORBIDDEN_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
