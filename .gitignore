@@ -25,3 +25,8 @@ evidence/traces/*.json
 # Test coverage
 .coverage
 coverage.xml
+
+# W3-03 vector index (rebuild with: python -m src.rag.ingest)
+src/rag/vectorstore/*
+!src/rag/vectorstore/.gitkeep
+.venv/
