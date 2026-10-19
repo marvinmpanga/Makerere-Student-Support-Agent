@@ -1,4 +1,4 @@
-﻿"""W3-03: Document ingestion, semantic chunking and ChromaDB vector indexing.
+"""W3-03: Document ingestion, semantic chunking and ChromaDB vector indexing.
 
 Pipeline:  source_register.json -> PDF text extraction (per page) -> token-window
 chunking (512 tokens, 10% overlap) -> embeddings -> persistent ChromaDB collection.
@@ -83,12 +83,19 @@ class Chunk:
 class IngestReport:
     documents_indexed: int = 0
     chunks_indexed: int = 0
+    embedder: str = ""
+    indexed_documents: list[dict[str, Any]] = field(default_factory=list)
     skipped: list[dict[str, str]] = field(default_factory=list)
 
     def as_dict(self) -> dict[str, Any]:
         return {
+            "collection_name": COLLECTION_NAME,
+            "chunk_tokens": CHUNK_TOKENS,
+            "overlap_ratio": OVERLAP_RATIO,
+            "embedder": self.embedder,
             "documents_indexed": self.documents_indexed,
             "chunks_indexed": self.chunks_indexed,
+            "indexed_documents": self.indexed_documents,
             "skipped": self.skipped,
         }
 
@@ -329,7 +336,7 @@ def ingest(
     """Run the full ingestion pipeline and return a report."""
     embedder = embedder or get_embedder("gemini")
     collection = get_collection(persist_dir, reset=reset)
-    report = IngestReport()
+    report = IngestReport(embedder=embedder.name)
 
     entries = load_register(register_path)
     if limit:
@@ -355,10 +362,24 @@ def ingest(
 
         # Drop stale chunks so re-ingesting a shrunken document leaves no orphans.
         collection.delete(where={"doc_id": doc_id})
-        report.chunks_indexed += index_chunks(collection, chunks, embedder)
+        written = index_chunks(collection, chunks, embedder)
+        report.chunks_indexed += written
         report.documents_indexed += 1
+        report.indexed_documents.append(
+            {
+                "doc_id": doc_id,
+                "title": entry.get("title", doc_id),
+                "category": entry.get("category", ""),
+                "chunks": written,
+                "page_span": f"{chunks[0].page_start}-{chunks[-1].page_end}",
+                "sample_citation": chunks[0].citation,
+                "source_url": entry.get("source_url", ""),
+            }
+        )
         logger.info("%s: %d chunks", doc_id, len(chunks))
 
+    manifest_path = Path(persist_dir) / "index_manifest.json"
+    manifest_path.write_text(json.dumps(report.as_dict(), indent=2), encoding="utf-8")
     return report
 
 

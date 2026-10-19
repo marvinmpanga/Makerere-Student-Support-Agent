@@ -39,15 +39,23 @@ MOCK_STRUCTURED_RESPONSE = {
     "inquiry_category": "Examinations/Appeals",
     "confidence_score": 0.88,
     "procedural_guidance": [
-        "Step 1: Log in to the AIMS student portal at aims.mak.ac.ug and navigate to "
-        "'My Results' to confirm the mark is listed as missing or blank.",
-        "Step 2: Obtain the official 'Missing Mark Report Form' from your Faculty "
-        "Examinations Office (CoCIS, Senate Building, Room G14).",
-        "Step 3: Complete the form with your course unit code (BSE4104), lecturer name, "
-        "and the date you sat the examination.",
+        (
+            "Step 1: Log in to the AIMS student portal at aims.mak.ac.ug and navigate to "
+            "'My Results' to confirm the mark is listed as missing or blank."
+        ),
+        (
+            "Step 2: Obtain the official 'Missing Mark Report Form' from your Faculty "
+            "Examinations Office (CoCIS, Senate Building, Room G14)."
+        ),
+        (
+            "Step 3: Complete the form with your course unit code (BSE4104), lecturer name, "
+            "and the date you sat the examination."
+        ),
         "Step 4: Attach supporting evidence such as your examination attendance slip.",
-        "Step 5: Submit the form to the Faculty Examinations Officer within 14 working days "
-        "of the official results release. Late submissions require Dean of Faculty approval.",
+        (
+            "Step 5: Submit the form to the Faculty Examinations Officer within 14 working days "
+            "of the official results release. Late submissions require Dean of Faculty approval."
+        ),
         "Step 6: Retain a copy of your submitted form and request a reference number.",
         "Note: This process initiates an investigation and does not guarantee a mark change.",
     ],
