@@ -5,7 +5,7 @@ def confirm_ticket_action(ticket_id: str, confirmed: bool) -> dict:
     """
     Deprecated CLI handler kept for backward compatibility tests.
     """
-    print(f"--- HUMAN IN THE LOOP REQUIRED ---")
+    print("--- HUMAN IN THE LOOP REQUIRED ---")
     print(f"Ticket {ticket_id} is pending your approval.")
     
     # In a real deployed web app, this would block the API response.

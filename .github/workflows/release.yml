@@ -1,0 +1,105 @@
+name: Final GitHub Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: "Release tag name (e.g. v1.0.0)"
+        required: true
+        default: "v1.0.0"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    name: Create Final GitHub Release & Assets
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip build wheel
+
+      - name: Build Python distribution packages
+        run: |
+          python -m build
+
+      - name: Generate Release Notes
+        id: notes
+        run: |
+          cat << 'EOF' > RELEASE_NOTES.md
+          # Makerere Student Support & Onboarding Triage Agent — Release v1.0.0
+
+          ### BSE4104 Final Capstone Production Release & Containerization
+
+          This official **v1.0.0** release delivers the complete, end-to-end production-grade **Makerere Student Support & Onboarding Triage Agent**, complete with containerized deployment, 67-document policy corpus, ChromaDB vectorstore, Plan-Act-Observe orchestration, prompt-injection defense, and non-negotiable institutional refusal boundaries.
+
+          ---
+
+          ### Core Deliverables Index
+
+          | Capability | Implementation | Evidence & Benchmark |
+          | :--- | :--- | :--- |
+          | **Containerization** | Production multi-arch `Dockerfile` & `docker-compose.yml` | Multi-container orchestration, persistent volumes, `/health` endpoint |
+          | **Grounded Policy RAG** | ChromaDB cosine vector index across 67 official Makerere policy PDFs (512 tokens, 10% overlap) | MRR: `1.0000`, Precision@3: `88.89%`, Mandatory `[Doc_ID, Page N]` citations |
+          | **Bounded Orchestrator** | Bounded Plan-Act-Observe state machine (`INTAKE -> PLAN -> ACT -> OBSERVE -> RESPOND`) | Max 4 iterations ceiling, SHA-256 duplicate loop breaker |
+          | **Deterministic Tool Dispatcher** | Pydantic schema validation, non-blocking error recovery, JSONL telemetry | Tool call accuracy: `100.0%`, zero unhandled crashes |
+          | **Injection & Safety Guardrails** | Regex + Base64 payload decoding + output leak scanning | Safety refusal rate: `100.0%`, 6 threat categories |
+          | **Institutional Refusal Engine** | Zero-tolerance boundary for grade/fee/record tampering | Automatic escalation mapping to Academic Registrar & Bursar |
+          | **Human-in-the-Loop (HITL)** | Explicit review, edit, and confirmation flow for administrative ticket dispatch | Draft -> Confirm -> Dispatch to College Registrar Desk |
+          | **Production REST API** | FastAPI application with `/api/v1/chat`, `/api/v1/policy/search`, `/health` | Full OpenAPI documentation at `/docs` |
+
+          ---
+
+          ### Quick Start with Docker
+
+          ```bash
+          # 1. Clone repository
+          git clone https://github.com/mavn-bussiness/Makerere-Student-Support-Agent.git
+          cd Makerere-Student-Support-Agent
+
+          # 2. Launch containerized stack
+          docker compose up -d
+
+          # 3. Test healthcheck
+          curl http://localhost:8000/health
+          # -> {"status": "ok", "service": "support-agent-api", "version": "1.0.0"}
+
+          # 4. Query student support agent
+          curl -X POST http://localhost:8000/api/v1/chat \
+            -H "Content-Type: application/json" \
+            -d '{"query": "What are the rules regarding examination registration and results access?"}'
+          ```
+          EOF
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "v1.0.0: Final Capstone Release & Production Container"
+          body_path: RELEASE_NOTES.md
+          draft: false
+          prerelease: false
+          files: |
+            dist/*
+            docker-compose.yml
+            Dockerfile
+            knowledge/source_register.json
+            knowledge/mak-policies-manifest.csv
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

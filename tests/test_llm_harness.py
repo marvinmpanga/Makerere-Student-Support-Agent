@@ -2,7 +2,6 @@ import json
 import pytest
 from unittest.mock import patch, MagicMock
 from fastapi.testclient import TestClient
-from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 
 from src.main import app

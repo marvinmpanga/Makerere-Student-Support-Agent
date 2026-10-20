@@ -1,0 +1,28 @@
+# W8-02: Single-command orchestration booting the Makerere Student Support Agent & persistent ChromaDB volume
+services:
+  support-agent-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: makerere-student-support-agent
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env.example
+    environment:
+      - APP_NAME=Makerere Student Support Agent
+      - ENVIRONMENT=production
+      - LOG_LEVEL=INFO
+    volumes:
+      - chroma_vectorstore:/app/src/rag/vectorstore
+      - agent_traces:/app/evidence/traces
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  chroma_vectorstore:
+  agent_traces:

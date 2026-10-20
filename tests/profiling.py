@@ -1,4 +1,4 @@
-﻿import time
+import time
 import json
 from typing import Callable, Any, Dict
 from pathlib import Path
@@ -114,8 +114,8 @@ def real_rag_workflow():
     """Calls the RAG pipeline."""
     from src.core.rag_pipeline import RAGPipeline
     from src.schemas.rag import RAGAnswerRequest
-    pipeline = RAGPipeline()
-    request = RAGAnswerRequest(
+    _pipeline = RAGPipeline()
+    _request = RAGAnswerRequest(
         query="When is the deadline for tuition?",
         session_id="profiling-session-rag-001"
     )

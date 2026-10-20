@@ -1,0 +1,171 @@
+================================================================================
+  TASK REPORT #2
+  DESIGN RAG ARCHITECTURE DIAGRAM & PIPELINE SPEC
+================================================================================
+  Assignee       : KM
+  Branch         : system_architecture
+  Status         : 100% COMPLETE
+  Date Completed : 2026-10-09
+================================================================================
+
+
+1. TASK OBJECTIVE
+-----------------
+Design and document the Retrieval-Augmented Generation (RAG) architecture 
+for the Makerere Student Support Agent. The specification must describe the 
+full pipeline from document ingestion through to grounded answer generation, 
+and must accurately reflect what is currently implemented versus what is 
+planned for future stages.
+
+
+2. WHAT WAS DELIVERED
+---------------------
+
+2.1 RAG Pipeline Specification Document
+  File: docs/rag/README.md (179 lines)
+
+  This document covers the following sections:
+
+  a) Scope — Defines the RAG layer's purpose: grounding the LLM in approved 
+     policy documents so answers are traceable, evidence-based, and safe.
+
+  b) System Objective — Enforces separation between AI-generated answer 
+     drafting, deterministic retrieval/validation, and human approval.
+
+  c) High-Level Pipeline — An 8-step numbered flow:
+     1. Approved source documents are discovered and loaded
+     2. Documents are normalized and chunked
+     3. Metadata is attached to each chunk
+     4. Embeddings are generated and stored in a vector index
+     5. A student question triggers retrieval of relevant chunks
+     6. The retrieved evidence is inserted into the LLM prompt
+     7. The model generates a grounded answer
+     8. The answer is validated against the evidence and scope
+
+  d) Data Source Strategy — Documents from Makerere University's official 
+     website, including academic policies, fee structures, registration 
+     guidelines, examination regulations, and student support procedures.
+
+  e) Chunking Strategy — Character-level text chunking with configurable 
+     chunk_size (default 500 characters) and overlap (default 50 characters). 
+     Each chunk retains metadata about its source document, chunk index, 
+     and any section headers.
+
+  f) Retrieval Strategy — Currently uses keyword-based scoring (TF-IDF style 
+     term matching). The spec describes the target state of vector-based 
+     semantic retrieval using an embedding model.
+
+  g) Grounding Prompt Template — The `build_grounded_prompt()` function 
+     constructs a prompt that includes:
+       - The system instructions for grounded answering
+       - The retrieved evidence chunks with source citations
+       - The student's original question
+       - An explicit instruction to refuse if evidence is insufficient
+
+  h) Evidence Sufficiency Check — The pipeline checks whether retrieved 
+     chunks are relevant enough to answer the question. If not, it returns 
+     a safe refusal message rather than hallucinating.
+
+  i) Implementation Status (UPDATED during this task) — A clear two-part 
+     section listing:
+
+     What IS implemented (src/core/rag_pipeline.py, src/api/rag.py):
+       - KnowledgeIndex class with ingest_directory() and ingest_texts()
+       - Character-level text chunking with configurable size and overlap
+       - Keyword-based retrieval scoring (TF-IDF style term matching)
+       - build_grounded_prompt() for evidence-grounded prompt composition
+       - answer() method with evidence-sufficiency check and safe refusal
+       - POST /api/v1/rag/answer HTTP endpoint mounted and live
+
+     What is NOT yet implemented (next stage):
+       - Real vector embeddings (no embedding model integrated)
+       - Named embedding model or vector store (no Pinecone, ChromaDB, etc.)
+       - Embedding generation step in the ingestion pipeline
+       - Re-ranking and semantic similarity scoring
+       - Trace logging per answer (chunk IDs, session ID, grounding verdict)
+
+
+3. HOW THE RAG PIPELINE WORKS (End-to-End)
+-------------------------------------------
+
+Step 1: INGESTION
+  - The KnowledgeIndex.ingest_directory() method reads all .txt and .md 
+    files from a specified directory (e.g., data/policies/).
+  - Alternatively, ingest_texts() accepts a list of raw text strings.
+  - Each document is split into overlapping chunks using a sliding window 
+    approach (500 chars, 50 char overlap by default).
+  - Each chunk is stored with metadata: source filename, chunk index, 
+    and the raw text content.
+
+Step 2: RETRIEVAL
+  - When a student asks a question, the pipeline tokenizes the query and 
+    each stored chunk into lowercase word sets.
+  - A relevance score is computed based on term overlap (number of query 
+    terms found in the chunk divided by total query terms).
+  - The top-K most relevant chunks are selected (K is configurable).
+
+Step 3: PROMPT CONSTRUCTION
+  - build_grounded_prompt() assembles a prompt with:
+    • System role instructions ("You are a Makerere student support agent...")
+    • The evidence section: each chunk is formatted as 
+      "[Source: filename, Chunk N] text content"
+    • The student's question
+    • An explicit guard: "If the evidence does not contain enough 
+      information to answer, say so honestly."
+
+Step 4: ANSWER GENERATION
+  - The assembled prompt is sent to the LLM (Gemini 2.5 Flash via the 
+    LLM Harness).
+  - The model generates a grounded response based solely on the evidence.
+
+Step 5: VALIDATION
+  - The answer() method checks if any chunks were retrieved at all.
+  - If no relevant chunks are found (evidence sufficiency check fails), 
+    the pipeline returns a safe refusal: "I don't have enough information 
+    in the approved policy documents to answer that question."
+  - This prevents hallucination on topics outside the knowledge base.
+
+
+4. FILES INVOLVED
+-----------------
+  docs/rag/README.md                   — UPDATED (179 lines, status section)
+  src/core/rag_pipeline.py             — Pre-existing implementation (verified)
+  src/api/rag.py                       — Pre-existing HTTP endpoint (verified)
+  tests/test_rag_pipeline.py           — Pre-existing tests (4 tests, all passing)
+
+
+5. VERIFICATION
+---------------
+  - The 4 existing RAG tests all pass:
+    • test_rag_indexing_creates_chunks_and_metadata      — PASSED
+    • test_grounded_prompt_includes_evidence_and_question — PASSED
+    • test_rag_answer_retrieval_returns_supporting_sources_for_matching_question — PASSED
+    • test_rag_answer_rejects_unrelated_question_without_support — PASSED
+  - The implementation status section was manually verified against the 
+    actual codebase — every "implemented" claim has a corresponding function 
+    or class in the code.
+  - The POST /api/v1/rag/answer endpoint is registered in main.py and 
+    appears in the FastAPI /docs Swagger UI.
+
+
+6. KNOWN LIMITATIONS & FUTURE WORK
+-----------------------------------
+  - Retrieval is keyword-based (term overlap), NOT semantic. This means 
+    paraphrased questions or synonym-heavy queries may miss relevant chunks 
+    even when they exist in the knowledge base.
+  - No embedding model is integrated. The spec describes the target state 
+    but the actual pipeline does not generate or store vector embeddings.
+  - No persistent vector store. All indexed data lives in Python memory 
+    and is lost when the server restarts.
+  - No re-ranking. Results are returned in raw relevance-score order 
+    without a cross-encoder or LLM-based re-ranker.
+  - No per-answer trace logging. The spec calls for logging chunk IDs, 
+    session IDs, and grounding verdicts, but this is not yet implemented 
+    in the pipeline code.
+  - These items are explicitly documented in the "What is NOT yet 
+    implemented" section of the spec and are earmarked for future sprints.
+
+
+================================================================================
+  END OF REPORT — TASK #2
+================================================================================
