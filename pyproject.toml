@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "makerere-student-support-agent"
-version = "0.3.0"
+version = "1.0.0"
 description = "Makerere Student Support & Onboarding Triage Agent (BSE4104 capstone)"
 readme = "README.md"
 requires-python = ">=3.11"

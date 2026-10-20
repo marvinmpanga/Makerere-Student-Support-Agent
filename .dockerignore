@@ -1,0 +1,40 @@
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# Python cache & compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Git & IDEs
+.git/
+.gitignore
+.gitattributes
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Test coverage & reports
+.coverage
+coverage.xml
+htmlcov/
+reports/
+
+# Local secrets & environment overrides
+.env
+*.env.local
+
+# Large raw PDF files & local caches
+knowledge/raw/*.pdf
+kamulegeya.pdf
+devbox.json
+devbox.lock
+.devbox/

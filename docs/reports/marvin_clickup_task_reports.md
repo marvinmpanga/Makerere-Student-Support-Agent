@@ -171,3 +171,47 @@
     - **Estimated Cost (6 Scenarios):** `$0.001505 USD` (`5,626` tokens)
 - **Verification Evidence:**
   - Commit `6630e1f` on branch `feature/W7-eval-runner` (`3 passed` in `tests/test_week7_runner.py`).
+
+---
+
+## Week 8 Deliverables
+
+### Task `W8-01`: Multi-Container Orchestration (`docker-compose.yml`)
+- **Status:** `COMPLETE`
+- **Assignee:** Mpanga Marvin Joseph
+- **Target Artifacts:** [`docker-compose.yml`](../../docker-compose.yml), [`.dockerignore`](../../.dockerignore)
+- **Summary of Work:**
+  - Designed and configured single-command `docker compose up -d` orchestration booting the Makerere Student Support API service.
+  - Configured persistent named volumes for ChromaDB vectorstore (`chroma_vectorstore:/app/src/rag/vectorstore`) and execution audit telemetry (`agent_traces:/app/evidence/traces`).
+  - Implemented container healthcheck probe testing `http://localhost:8000/health` at 30-second intervals with 5-second timeouts.
+  - Created [`.dockerignore`](../../.dockerignore) to prevent virtual environments, local caches, raw binaries, and test coverage artifacts from bloating the build context.
+- **Verification Evidence:**
+  - `docker-compose.yml` verified; container boots and passes health checks.
+
+---
+
+### Task `W8-02`: Production Container Image & Hardening (`Dockerfile`)
+- **Status:** `COMPLETE`
+- **Assignee:** Mpanga Marvin Joseph
+- **Target Artifacts:** [`Dockerfile`](../../Dockerfile), [`src/main.py`](../../src/main.py), [`src/api/`](../../src/api/)
+- **Summary of Work:**
+  - Authored multi-arch production `Dockerfile` based on `python:3.12-slim`.
+  - Enforced non-root user execution (`useradd appuser`) and restricted filesystem permissions for security compliance.
+  - Implemented container entrypoint running `uvicorn src.main:app --host 0.0.0.0 --port 8000` with automated container healthcheck (`curl -f http://localhost:8000/health`).
+  - Integrated REST API router endpoints (`/api/v1/chat`, `/api/v1/policy/search`, `/api/v1/student/{id}/status`, `/api/v1/tickets/draft`, `/api/v1/tickets/confirm`, `/api/v1/eval/metrics`).
+- **Verification Evidence:**
+  - Commit `d89f8dc` and unit tests in `tests/test_api.py` (`53 passed`).
+
+---
+
+### Task `W8-03`: Final GitHub Release (v1.0.0) & Automated CI/CD
+- **Status:** `COMPLETE`
+- **Assignee:** Mpanga Marvin Joseph
+- **Target Artifacts:** [`RELEASE.md`](../../RELEASE.md), [`.github/workflows/docker.yml`](../../.github/workflows/docker.yml), [`.github/workflows/release.yml`](../../.github/workflows/release.yml), [`pyproject.toml`](../../pyproject.toml)
+- **Summary of Work:**
+  - Bumped project version to `v1.0.0` in [`pyproject.toml`](../../pyproject.toml) and [`src/main.py`](../../src/main.py).
+  - Authored comprehensive [`RELEASE.md`](../../RELEASE.md) detailing quickstart commands, REST API schemas, architectural completeness matrix, and verified evaluation benchmarks.
+  - Built GitHub Actions automated release pipeline ([`.github/workflows/release.yml`](../../.github/workflows/release.yml)) for building distribution wheels/tarballs and publishing GitHub Releases.
+  - Built Docker validation and GHCR publishing pipeline ([`.github/workflows/docker.yml`](../../.github/workflows/docker.yml)).
+- **Verification Evidence:**
+  - Release artifacts generated, 53 test cases passing, all quality gates verified.
