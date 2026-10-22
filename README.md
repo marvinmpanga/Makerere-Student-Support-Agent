@@ -1,5 +1,11 @@
 # Makerere Student Support & Onboarding Triage Agent
 
+[![CI](https://github.com/marvinmpanga/Makerere-Student-Support-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/marvinmpanga/Makerere-Student-Support-Agent/actions/workflows/ci.yml)
+![Lint: Ruff](https://img.shields.io/badge/lint-ruff-261230)
+![Security: Bandit](https://img.shields.io/badge/security-bandit-yellow)
+![Tests: Pytest](https://img.shields.io/badge/tests-pytest-0A9EDC)
+![Python 3.11 | 3.12](https://img.shields.io/badge/python-3.11%20%7C%203.12-blue)
+
 **Course:** BSE4104 Emerging Trends in Software Engineering  
 **Academic Year:** 2026/2027 | Semester I  
 **Course Convener:** Dr. Kamulegeya Grace B. (PhD)  
