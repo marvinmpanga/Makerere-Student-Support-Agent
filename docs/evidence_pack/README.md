@@ -22,6 +22,9 @@
 | **Week 6** | Implement Non-Negotiable Refusal Engine | [`src/safety/refusal_engine.py`](../../src/safety/refusal_engine.py) | Zero-tolerance refusal for grade/fee/record mutation with Registrar escalation mapping |
 | **Week 7** | Implement Automated Evaluation Harness | [`src/eval/runner.py`](../../src/eval/runner.py) | End-to-end benchmark runner; [`tests/test_week7_runner.py`](../../tests/test_week7_runner.py) (`3 passed`) |
 | **Week 7** | Benchmark Retrieval (Precision@k, MRR, Hit Rate) | [`docs/evals/retrieval_benchmarks.md`](../evals/retrieval_benchmarks.md) | `MRR = 1.0000`, `Precision@3 = 88.89%`, `Hit Rate = 100%`, `Refusal Rate = 100%` |
+| **Week 8** | Multi-Container Orchestration (`docker-compose.yml`) | [`docker-compose.yml`](../../docker-compose.yml), [`.dockerignore`](../../.dockerignore) | Single-command orchestration, persistent ChromaDB and trace volumes, healthcheck |
+| **Week 8** | Production Container Image & REST API | [`Dockerfile`](../../Dockerfile), [`src/main.py`](../../src/main.py), [`src/api/`](../../src/api/) | Non-root `appuser`, `/health`, `/api/v1/chat`, `/api/v1/policy/search`; [`tests/test_api.py`](../../tests/test_api.py) (`9 passed`) |
+| **Week 8** | Final GitHub Release & Automated Workflows | [`RELEASE.md`](../../RELEASE.md), [`.github/workflows/release.yml`](../../.github/workflows/release.yml), [`.github/workflows/docker.yml`](../../.github/workflows/docker.yml) | Automated GitHub release packaging, container build & GHCR publish |
 
 ---
 
@@ -40,7 +43,11 @@ python -m src.rag.ingest --embedder local --reset
 # 4. Run quantitative benchmark evaluation suite
 python -m src.eval.runner
 
-# 5. Run lint and unit test suite
+# 5. Run lint and unit test suite (53 tests)
 ruff check src tests
 pytest -q
+
+# 6. Run containerized stack
+docker compose up -d
+curl http://localhost:8000/health
 ```

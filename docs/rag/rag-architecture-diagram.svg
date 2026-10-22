@@ -1,0 +1,100 @@
+<svg width="1600" height="760" viewBox="0 0 1600 760" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Makerere Student Support Agent RAG Architecture</title>
+  <desc id="desc">A clean, readable RAG architecture showing source documents, ingestion, vector storage, retrieval, grounding, LLM generation, decision, human approval, and observability.</desc>
+
+  <defs>
+    <marker id="arrow" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto">
+      <path d="M0,0 L12,6 L0,12 z" fill="#24557c"/>
+    </marker>
+    <style>
+      .title { font: 700 30px 'Segoe UI', Arial, sans-serif; fill: #183153; }
+      .section { font: 700 18px 'Segoe UI', Arial, sans-serif; fill: #21466f; }
+      .label { font: 600 14px 'Segoe UI', Arial, sans-serif; fill: #1d2d3d; }
+      .small { font: 500 12px 'Segoe UI', Arial, sans-serif; fill: #496378; }
+      .source { fill: #edf7ff; stroke: #4d82b6; stroke-width: 2; }
+      .ingest { fill: #edf9f0; stroke: #4c9d69; stroke-width: 2; }
+      .store { fill: #f3f7ff; stroke: #5d82af; stroke-width: 2; }
+      .query { fill: #f4f5ff; stroke: #6d7fc4; stroke-width: 2; }
+      .llm { fill: #fff8e6; stroke: #c89232; stroke-width: 2; }
+      .human { fill: #f6f0ff; stroke: #7b5cc7; stroke-width: 2; }
+      .obs { fill: #f4f6fa; stroke: #77889a; stroke-width: 2; }
+      .arrow { stroke: #24557c; stroke-width: 3; fill: none; marker-end: url(#arrow); }
+    </style>
+  </defs>
+
+  <rect width="1600" height="760" fill="#fbfcff"/>
+  <text x="800" y="48" text-anchor="middle" class="title">Makerere Student Support Agent — RAG Architecture</text>
+
+  <rect x="60" y="110" width="220" height="200" class="source" rx="14"/>
+  <text x="170" y="145" text-anchor="middle" class="section">Approved Sources</text>
+  <rect x="90" y="170" width="160" height="38" class="ingest" rx="10"/>
+  <text x="170" y="194" text-anchor="middle" class="label">Policies</text>
+  <rect x="90" y="220" width="160" height="38" class="ingest" rx="10"/>
+  <text x="170" y="244" text-anchor="middle" class="label">FAQs</text>
+  <rect x="90" y="270" width="160" height="38" class="ingest" rx="10"/>
+  <text x="170" y="294" text-anchor="middle" class="label">Procedures</text>
+
+  <rect x="330" y="100" width="260" height="420" class="ingest" rx="14"/>
+  <text x="460" y="135" text-anchor="middle" class="section">Offline Ingestion</text>
+  <rect x="360" y="165" width="200" height="42" class="source" rx="10"/>
+  <text x="460" y="192" text-anchor="middle" class="label">Source discovery</text>
+  <rect x="360" y="220" width="200" height="42" class="source" rx="10"/>
+  <text x="460" y="247" text-anchor="middle" class="label">Parsing</text>
+  <rect x="360" y="275" width="200" height="42" class="source" rx="10"/>
+  <text x="460" y="302" text-anchor="middle" class="label">Cleaning</text>
+  <rect x="360" y="330" width="200" height="42" class="source" rx="10"/>
+  <text x="460" y="357" text-anchor="middle" class="label">Chunking</text>
+  <rect x="360" y="385" width="200" height="42" class="source" rx="10"/>
+  <text x="460" y="412" text-anchor="middle" class="label">Metadata</text>
+  <rect x="360" y="440" width="200" height="42" class="source" rx="10"/>
+  <text x="460" y="467" text-anchor="middle" class="label">Embedding</text>
+
+  <rect x="650" y="140" width="220" height="120" class="store" rx="14"/>
+  <text x="760" y="176" text-anchor="middle" class="section">Vector Store</text>
+  <text x="760" y="206" text-anchor="middle" class="label">Chunk vectors</text>
+  <text x="760" y="229" text-anchor="middle" class="label">Metadata + refs</text>
+
+  <rect x="650" y="330" width="260" height="260" class="query" rx="14"/>
+  <text x="780" y="365" text-anchor="middle" class="section">Query + Retrieval</text>
+  <rect x="685" y="390" width="190" height="38" class="ingest" rx="10"/>
+  <text x="780" y="415" text-anchor="middle" class="label">Student question</text>
+  <rect x="685" y="440" width="190" height="38" class="ingest" rx="10"/>
+  <text x="780" y="465" text-anchor="middle" class="label">Scope check</text>
+  <rect x="685" y="490" width="190" height="38" class="ingest" rx="10"/>
+  <text x="780" y="515" text-anchor="middle" class="label">Top-k retrieval</text>
+  <rect x="685" y="540" width="190" height="38" class="ingest" rx="10"/>
+  <text x="780" y="565" text-anchor="middle" class="label">Context assembly</text>
+
+  <rect x="975" y="330" width="270" height="230" class="llm" rx="14"/>
+  <text x="1110" y="365" text-anchor="middle" class="section">LLM + Validation</text>
+  <rect x="1010" y="390" width="200" height="38" class="ingest" rx="10"/>
+  <text x="1110" y="415" text-anchor="middle" class="label">Prompt with evidence</text>
+  <rect x="1010" y="445" width="200" height="38" class="ingest" rx="10"/>
+  <text x="1110" y="470" text-anchor="middle" class="label">Generate answer</text>
+  <rect x="1010" y="500" width="200" height="38" class="llm" rx="10"/>
+  <text x="1110" y="525" text-anchor="middle" class="label">Grounding check</text>
+
+  <rect x="1310" y="330" width="220" height="170" class="llm" rx="14"/>
+  <text x="1420" y="365" text-anchor="middle" class="section">Decision</text>
+  <text x="1420" y="405" text-anchor="middle" class="label">Supported?</text>
+  <text x="1420" y="440" text-anchor="middle" class="small">Yes → answer</text>
+  <text x="1420" y="462" text-anchor="middle" class="small">No → fallback</text>
+
+  <rect x="1010" y="120" width="310" height="150" class="human" rx="14"/>
+  <text x="1165" y="150" text-anchor="middle" class="section">Human Approval Boundary</text>
+  <text x="1165" y="185" text-anchor="middle" class="label">Student-status check</text>
+  <text x="1165" y="210" text-anchor="middle" class="label">Ticket approval</text>
+  <text x="1165" y="235" text-anchor="middle" class="small">Sensitive decisions require review</text>
+
+  <rect x="350" y="600" width="760" height="100" class="obs" rx="14"/>
+  <text x="730" y="635" text-anchor="middle" class="section">Observability &amp; Traceability</text>
+  <text x="730" y="662" text-anchor="middle" class="label">Retrieved chunks, scores, prompt versions, IDs, latency, grounding status</text>
+
+  <path d="M280 205 H330" class="arrow"/>
+  <path d="M590 205 H650" class="arrow"/>
+  <path d="M760 260 V330" class="arrow"/>
+  <path d="M910 470 H975" class="arrow"/>
+  <path d="M1210 470 H1310" class="arrow"/>
+  <path d="M1165 270 V330" class="arrow"/>
+  <path d="M1110 560 V600" class="arrow"/>
+</svg>
