@@ -3,6 +3,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.env
+.env.example
 .venv/
 venv/
 ENV/
@@ -12,6 +13,9 @@ ENV/
 *.sqlite3
 knowledge/chroma_db/
 knowledge/raw/*.pdf
+
+# Personal files
+kamulegeya.pdf
 
 # IDE & OS
 .idea/

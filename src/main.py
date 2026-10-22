@@ -12,9 +12,14 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 
+from src.api.llm import router as llm_router
+from src.api.rag import router as rag_router
+
 settings = Settings()
 app = FastAPI(title=settings.app_name)
 
+app.include_router(llm_router, prefix="/api/v1/llm")
+app.include_router(rag_router, prefix="/api/v1/rag")
 
 @app.get("/")
 def read_root() -> dict[str, str]:
