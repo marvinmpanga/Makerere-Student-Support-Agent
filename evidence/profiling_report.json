@@ -1,0 +1,17 @@
+{
+    "model_used": "gemini-2.5-flash",
+    "total_runs": 1,
+    "successful_runs": 1,
+    "average_latency_ms": 505.2,
+    "total_estimated_cost_usd": 0.0001875,
+    "detailed_runs": [
+        {
+            "workflow": "Mock Simple Task",
+            "latency_ms": 505.2,
+            "prompt_tokens": 1500,
+            "completion_tokens": 250,
+            "estimated_cost_usd": 0.0001875,
+            "status": "success"
+        }
+    ]
+}

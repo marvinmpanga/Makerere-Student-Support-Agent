@@ -25,7 +25,7 @@ evidence/traces/*.json
 # Test coverage & reports
 .coverage
 coverage.xml
-reports/
+/reports/
 
 # W3-03 vector index (rebuild with: python -m src.rag.ingest)
 src/rag/vectorstore/*

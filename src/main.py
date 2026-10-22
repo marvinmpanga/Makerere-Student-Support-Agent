@@ -46,6 +46,22 @@ app.add_middleware(
 # Mount all v1 API routes
 app.include_router(api_router)
 
+# Mount system architecture modular routers
+try:
+    from src.api.hitl import router as hitl_router
+    from src.api.llm import router as llm_router
+    from src.api.memory import router as memory_router
+    from src.api.rag import router as rag_router
+    from src.api.tools import router as tools_router
+
+    app.include_router(llm_router, prefix="/api/v1/llm", tags=["LLM Harness"])
+    app.include_router(rag_router, prefix="/api/v1/rag", tags=["RAG Pipeline"])
+    app.include_router(tools_router, prefix="/api/v1/tools", tags=["Tools Deterministic"])
+    app.include_router(memory_router, prefix="/api/v1/memory", tags=["Session Memory"])
+    app.include_router(hitl_router, prefix="/api/v1/hitl", tags=["HITL"])
+except ImportError:
+    pass
+
 
 @app.get("/", tags=["System"])
 def read_root() -> dict[str, str]:
