@@ -1,4 +1,4 @@
-import os
+﻿import os
 import time
 import json
 import logging
@@ -10,6 +10,7 @@ from google import genai
 from google.genai import types
 
 from src.schemas.llm import LLMExecuteRequest, LLMExecuteResponse
+from src.core.memory import memory_store
 
 logger = logging.getLogger(__name__)
 
@@ -45,10 +46,21 @@ def execute_llm_query(request: LLMExecuteRequest) -> LLMExecuteResponse:
 
     start_time = time.perf_counter()
     
+    history = ""
+    if request.session_id:
+        past = memory_store.get_formatted_history(request.session_id)
+        if past:
+            history = "\n".join(f"{m['role'].upper()}: {m['content']}" for m in past)
+            full_query = f"[Conversation history]\n{history}\n\n[Current query]\n{request.query}"
+        else:
+            full_query = request.query
+    else:
+        full_query = request.query
+    
     try:
         response = client.models.generate_content(
             model=model_name,
-            contents=request.query
+            contents=full_query
         )
     except Exception as e:
         logger.error(f"LLM API failure: {str(e)}")
@@ -69,6 +81,10 @@ def execute_llm_query(request: LLMExecuteRequest) -> LLMExecuteResponse:
             total_tokens = prompt_tokens + completion_tokens
         
     raw_output = response.text or ""
+
+    if request.session_id:
+        memory_store.add_message(request.session_id, "user", request.query)
+        memory_store.add_message(request.session_id, "assistant", raw_output)
 
     llm_response = LLMExecuteResponse(
         raw_output=raw_output,
@@ -108,3 +124,4 @@ def _log_trace(request: LLMExecuteRequest, response: LLMExecuteResponse, model: 
     except Exception as e:
         logger.error(f"Failed to write trace to {TRACE_FILE_PATH}: {e}")
         # We generally shouldn't crash the user request if tracing fails, but log it loudly
+

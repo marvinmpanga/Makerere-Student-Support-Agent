@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.core.rag_pipeline import KnowledgeIndex, RAGAnswerRequest, RAGAnswerResponse, build_grounded_prompt
+from src.core.rag_pipeline import KnowledgeIndex, RAGAnswerRequest, build_grounded_prompt
 
 
 def test_rag_indexing_creates_chunks_and_metadata(tmp_path):

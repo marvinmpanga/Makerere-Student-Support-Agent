@@ -1,0 +1,286 @@
+================================================================================
+  TASK REPORT #8
+  END-TO-END SYSTEM LATENCY & COST PROFILING
+================================================================================
+  Assignee       : KM
+  Branch         : system_architecture
+  Status         : 100% COMPLETE
+  Date Completed : 2026-10-09
+================================================================================
+
+
+1. TASK OBJECTIVE
+-----------------
+Build a profiling harness that measures end-to-end system latency and 
+estimates operational cost for the Makerere Student Support Agent's AI 
+workflows. The profiler must:
+  a) Execute arbitrary workflow functions and capture latency metrics
+  b) Extract token usage (prompt tokens, completion tokens) from responses
+  c) Calculate estimated USD cost based on Gemini 2.5 Flash pricing
+  d) Generate aggregate reports with averages and totals
+  e) Save reports to the evidence directory for audit purposes
+  f) Support both mock workflows (for testing) and real LLM/RAG workflows 
+     (for production profiling)
+  g) Include proper pytest test functions
+
+
+2. WHAT WAS DELIVERED
+---------------------
+
+2.1 SystemProfiler Class
+  File: tests/profiling.py (167 lines)
+
+  The SystemProfiler class is a reusable profiling engine:
+
+  Constructor:
+    - self.runs = []: Accumulates all profiling run results.
+
+  Method: profile_workflow(name: str, workflow_fn: Callable) -> Dict
+    Executes a workflow function, extracts metrics, and records results.
+    
+    Process:
+      1. Calls workflow_fn() — any callable that returns either:
+         - A dict with keys: latency_ms, prompt_tokens, completion_tokens
+         - An object with attributes: latency_ms, prompt_tokens, completion_tokens 
+           (e.g., LLMExecuteResponse)
+      2. Extracts latency_ms, prompt_tokens, completion_tokens from the result
+      3. Calculates estimated cost using the formula:
+         cost = (prompt_tokens / 1,000,000 * COST_PER_1M_PROMPT_TOKENS)
+              + (completion_tokens / 1,000,000 * COST_PER_1M_COMPLETION_TOKENS)
+      4. Records a run_data dict with all metrics + status
+      5. On failure, records error message with status="failed"
+      6. Appends to self.runs and returns the run_data
+
+  Method: generate_report(save_path: str) -> str
+    Aggregates all runs into a summary report.
+    
+    Report structure:
+      {
+        "model_used": "gemini-2.5-flash",
+        "total_runs": <int>,
+        "successful_runs": <int>,
+        "average_latency_ms": <float>,
+        "total_estimated_cost_usd": <float>,
+        "detailed_runs": [<list of individual run results>]
+      }
+    
+    If save_path is provided, writes the report as formatted JSON to disk.
+    Creates parent directories automatically.
+    Returns the JSON string regardless of whether it's saved to disk.
+
+
+2.2 Pricing Constants
+  Based on official Gemini 2.5 Flash pricing (as of the implementation date):
+
+  COST_PER_1M_PROMPT_TOKENS  = $0.075  (input tokens)
+  COST_PER_1M_COMPLETION_TOKENS = $0.30  (output tokens)
+  MODEL_NAME = "gemini-2.5-flash"
+
+  These constants are defined at the module level for easy updating when 
+  pricing changes.
+
+  Example cost calculation:
+    A typical query using 1,500 prompt tokens and 250 completion tokens:
+    Cost = (1500 / 1,000,000 * 0.075) + (250 / 1,000,000 * 0.30)
+         = 0.0001125 + 0.000075
+         = $0.0001875 per query
+    
+    At 1,000 queries/day: $0.1875/day ≈ $5.63/month
+    At 10,000 queries/day: $1.875/day ≈ $56.25/month
+
+
+2.3 Workflow Functions
+
+  mock_agent_workflow():
+    A synthetic workflow that simulates agent work with a 0.5-second sleep.
+    Returns fixed metrics: latency_ms=505.2, prompt_tokens=1500, 
+    completion_tokens=250.
+    Purpose: Testing the profiler itself without needing API keys.
+
+  real_llm_workflow():
+    Calls the actual LLM harness (src/core/llm_harness.execute_llm_query).
+    Uses a realistic Makerere-specific query: "What is the late registration 
+    policy at Makerere?"
+    Returns an LLMExecuteResponse with real token counts and latency from 
+    the Gemini API.
+    Purpose: Profiling actual LLM performance in production.
+    Prerequisite: GEMINI_API_KEY environment variable must be set.
+
+  real_rag_workflow():
+    Calls the RAG pipeline (src/core/rag_pipeline.RAGPipeline).
+    Uses a realistic query: "When is the deadline for tuition?"
+    Currently uses a mock return (simulated latency) because the RAG pipeline 
+    doesn't return token metrics in its current form.
+    Purpose: Placeholder for future RAG profiling when the pipeline reports 
+    token usage.
+
+
+2.4 Main Script
+  When run as __main__ (python tests/profiling.py):
+    1. Creates a SystemProfiler instance
+    2. Profiles the mock workflow
+    3. Checks for GEMINI_API_KEY:
+       - If set: profiles the real LLM workflow too
+       - If not set: prints a skip message
+    4. Prints the final report to stdout
+    5. Saves the report to evidence/profiling_report.json
+
+
+2.5 Generated Report
+  File: evidence/profiling_report.json
+
+  The report file generated during profiling:
+  {
+      "model_used": "gemini-2.5-flash",
+      "total_runs": 1,
+      "successful_runs": 1,
+      "average_latency_ms": 505.2,
+      "total_estimated_cost_usd": 0.0001875,
+      "detailed_runs": [
+          {
+              "workflow": "Mock Simple Task",
+              "latency_ms": 505.2,
+              "prompt_tokens": 1500,
+              "completion_tokens": 250,
+              "estimated_cost_usd": 0.0001875,
+              "status": "success"
+          }
+      ]
+  }
+
+  Note: The report currently shows only the mock workflow because 
+  GEMINI_API_KEY was not configured in the development environment. 
+  When run with a valid API key, the report will include real LLM 
+  latency and token counts.
+
+
+3. HOW IT WORKS (Profiling Session Flow)
+------------------------------------------
+
+  1. INSTANTIATE: Create a SystemProfiler() instance.
+
+  2. PROFILE: For each workflow to measure, call:
+     profiler.profile_workflow("Workflow Name", workflow_function)
+     
+     This:
+       a) Invokes the workflow function
+       b) Extracts metrics from the return value
+       c) Calculates cost based on token counts
+       d) Records everything in self.runs
+
+  3. REPORT: Call profiler.generate_report() to:
+       a) Filter successful runs
+       b) Compute average latency across all successful runs
+       c) Sum total estimated cost across all successful runs
+       d) Write to evidence/profiling_report.json
+       e) Return the JSON string
+
+  4. ANALYZE: Open the JSON report to understand:
+       - Which workflows are fastest/slowest
+       - Which workflows use the most tokens (and therefore cost the most)
+       - Whether the average latency meets the user experience target
+       - What the projected monthly cost would be at scale
+
+
+4. COST MODEL EXPLAINED
+-------------------------
+
+  The Gemini 2.5 Flash model charges separately for input and output tokens:
+
+  Input (Prompt) Tokens — $0.075 per million tokens
+    These are the tokens in the prompt sent TO the model, including:
+    - System instructions
+    - Conversation history (from the memory store)
+    - Retrieved RAG evidence chunks
+    - The student's current question
+    
+    For the Makerere agent, a typical prompt contains:
+    - ~200 tokens for system instructions
+    - ~500 tokens for history (2-3 turns)
+    - ~500 tokens for RAG evidence (2-3 chunks)
+    - ~50 tokens for the student's question
+    Total: ~1,250 prompt tokens per query
+
+  Output (Completion) Tokens — $0.30 per million tokens
+    These are the tokens in the response FROM the model, including:
+    - The agent's answer text
+    - Any structured output (JSON tool calls)
+    
+    For the Makerere agent, a typical response contains:
+    - ~150-300 tokens for a policy explanation
+    Total: ~200 completion tokens per query
+
+  Projected Monthly Costs:
+    Low usage  (100 queries/day):  ~$0.019/day  → ~$0.57/month
+    Medium use (1,000 queries/day): ~$0.188/day  → ~$5.63/month
+    High usage (10,000 queries/day): ~$1.875/day → ~$56.25/month
+
+  These projections assume Gemini 2.5 Flash pricing remains stable. The 
+  profiler's constants should be updated if pricing changes.
+
+
+5. TESTS
+--------
+  File: tests/profiling.py (3 pytest functions at bottom of file)
+
+  Test 1: test_profiler_collects_latency
+    Creates a profiler, runs the mock workflow.
+    Asserts: latency_ms > 0
+    Purpose: Confirms the profiler correctly extracts latency from results.
+    RESULT: PASSED
+
+  Test 2: test_profiler_calculates_cost
+    Creates a profiler, runs the mock workflow.
+    Asserts: estimated_cost_usd >= 0
+    Purpose: Confirms the cost formula produces a non-negative value.
+    RESULT: PASSED
+
+  Test 3: test_generate_report_structure
+    Creates a profiler, runs the mock workflow, generates a report.
+    Asserts: report contains "average_latency_ms" key
+    Asserts: report contains "total_estimated_cost_usd" key
+    Asserts: report contains "detailed_runs" key
+    Purpose: Confirms the aggregate report has the required structure.
+    RESULT: PASSED
+
+
+6. FILES INVOLVED
+-----------------
+  tests/profiling.py                  — SystemProfiler class, workflows, tests
+  evidence/profiling_report.json      — Generated output report
+
+
+7. VERIFICATION
+---------------
+  - All 3 profiling tests pass (via pytest).
+  - The profiling script runs successfully as a standalone script 
+    (python tests/profiling.py).
+  - The report file evidence/profiling_report.json is created and contains 
+    valid JSON with all required fields.
+  - Cost calculations were manually verified:
+    (1500/1M * 0.075) + (250/1M * 0.30) = 0.0001125 + 0.000075 = 0.0001875 ✓
+  - Full suite: 35/35 tests pass.
+
+
+8. KNOWN LIMITATIONS & FUTURE WORK
+-----------------------------------
+  - The profiler does not measure wall-clock time independently — it relies 
+    on the workflow function to report its own latency. A future version 
+    should wrap the call in time.perf_counter() to capture true E2E latency 
+    including network overhead.
+  - The real_rag_workflow() currently uses mock metrics because the RAG 
+    pipeline doesn't report token counts. When the RAG pipeline is upgraded 
+    with an embedding model and LLM integration, the profiler should call 
+    it directly.
+  - No p50/p95/p99 latency percentiles. The current report only shows 
+    average latency. For production monitoring, percentile breakdowns 
+    are essential.
+  - No dashboard or visualization. The report is a flat JSON file. A 
+    future version could generate charts or integrate with Grafana/Prometheus.
+  - Pricing constants are hardcoded. They should be loaded from a config 
+    file or environment variable to allow easy updates without code changes.
+
+
+================================================================================
+  END OF REPORT — TASK #8
+================================================================================

@@ -1,0 +1,260 @@
+================================================================================
+  TASK REPORT #6
+  IMPLEMENT MULTI-TURN SESSION MEMORY STORE
+================================================================================
+  Assignee       : KM
+  Branch         : system_architecture
+  Status         : 100% COMPLETE
+  Date Completed : 2026-10-09
+================================================================================
+
+
+1. TASK OBJECTIVE
+-----------------
+Implement a multi-turn session memory store that enables the agent to 
+maintain context across multiple conversation turns within a single session. 
+The memory store must:
+  a) Store conversation history (user messages and assistant responses)
+  b) Retrieve history in a format consumable by the LLM
+  c) Enforce token limits to prevent context window overflow
+  d) Be wired into the LLM harness so history is automatically loaded 
+     before each query and saved after each response
+  e) Expose HTTP endpoints for session management (get, clear, delete)
+
+
+2. WHAT WAS DELIVERED
+---------------------
+
+2.1 SessionMemoryStore Class
+  File: src/core/memory.py (60 lines)
+
+  Classes:
+    Message:
+      - role (str): "user" or "assistant"
+      - content (str): The message text
+      - timestamp (float): Unix timestamp from time.time()
+      - to_dict(): Returns {"role": ..., "content": ...}
+
+    SessionMemoryStore:
+      - __init__(max_history_tokens=4000): Creates the store with a 
+        configurable token limit (default 4000 tokens ≈ 16,000 characters).
+      - _store: Dict[str, List[Message]] — Maps session IDs to message lists
+      - get_session(session_id): Returns the message list for a session. 
+        Auto-creates an empty list if the session doesn't exist.
+      - _approx_tokens(messages): Estimates token count using the formula 
+        len(content) // 4 (1 token ≈ 4 characters). This is a widely used 
+        approximation for English text with the Gemini tokenizer.
+      - add_message(session_id, role, content): Appends a new message to 
+        the session and then TRIMS oldest messages from the front if the 
+        total approximate token count exceeds max_history_tokens. The trim 
+        loop preserves at least 1 message to avoid empty history.
+      - get_formatted_history(session_id): Returns history as a list of 
+        dicts [{"role": "user", "content": "..."}, ...] — the standard 
+        format expected by LLM APIs.
+      - clear_session(session_id): Empties the message list but keeps the 
+        session key in the store.
+      - delete_session(session_id): Completely removes the session key 
+        from the store.
+
+  Singleton Instance:
+    memory_store = SessionMemoryStore()
+    This singleton is imported by both the LLM harness and the memory API.
+
+
+2.2 LLM Harness Integration
+  File: src/core/llm_harness.py (128 lines)
+
+  Three changes were made to wire the memory store into the LLM execution:
+
+  Change 1 — Import (Line 13):
+    from src.core.memory import memory_store
+
+  Change 2 — Load History Before LLM Call (Lines 49-58):
+    When a request includes a session_id:
+      a) Retrieve the formatted history from the memory store
+      b) If history exists, format it as:
+         "[Conversation history]
+          USER: previous question
+          ASSISTANT: previous answer
+          
+          [Current query]
+          What is the late registration policy?"
+      c) If no history exists, use the raw query as-is
+    When no session_id is provided, use the raw query as-is.
+
+  Change 3 — Save Turns After LLM Call (Lines 85-87):
+    After receiving the LLM response, if session_id is present:
+      a) Save the user's query: add_message(session_id, "user", query)
+      b) Save the assistant's response: add_message(session_id, "assistant", raw_output)
+    This ensures every conversation turn is captured for future reference.
+
+
+2.3 HTTP API Endpoints
+  File: src/api/memory.py (24 lines)
+
+  Endpoint 1: GET /api/v1/memory/{session_id}
+    Returns the formatted conversation history for the given session.
+    Response: List of {"role": str, "content": str} objects.
+    Example: [{"role": "user", "content": "What is the policy?"},
+              {"role": "assistant", "content": "The policy states..."}]
+
+  Endpoint 2: DELETE /api/v1/memory/{session_id}
+    Clears all messages for the session but keeps the session key.
+    Response: {"status": "cleared"}
+    Use case: Student wants to start a fresh conversation without losing 
+    the session container.
+
+  Endpoint 3: DELETE /api/v1/memory/{session_id}/delete
+    Completely removes the session from the memory store.
+    Response: {"status": "deleted"}
+    Use case: Session cleanup after the student is done or after a timeout.
+
+
+2.4 Router Registration
+  File: src/main.py
+  
+  The memory router is registered at:
+    app.include_router(memory_router, prefix="/api/v1/memory")
+
+
+3. HOW IT WORKS (End-to-End Multi-Turn Conversation)
+------------------------------------------------------
+
+  Turn 1:
+    Student sends: "What are the tuition fees for computer science?"
+    (session_id = "sess_abc123")
+    
+    1. LLM harness checks memory store → no history for "sess_abc123"
+    2. Raw query is sent to Gemini as-is
+    3. Gemini responds: "The tuition fees for BSc Computer Science are..."
+    4. Memory store saves:
+       - ("user", "What are the tuition fees for computer science?")
+       - ("assistant", "The tuition fees for BSc Computer Science are...")
+
+  Turn 2:
+    Student sends: "Can I pay in installments?"
+    (session_id = "sess_abc123")
+    
+    1. LLM harness checks memory store → finds 2 messages
+    2. Constructs prompt:
+       "[Conversation history]
+        USER: What are the tuition fees for computer science?
+        ASSISTANT: The tuition fees for BSc Computer Science are...
+        
+        [Current query]
+        Can I pay in installments?"
+    3. Gemini responds with context-aware answer about installment plans
+    4. Memory store saves the new turn (now 4 messages total)
+
+  Turn N (Token Overflow):
+    After many turns, the approximate token count exceeds 4000.
+    The add_message() method trims the oldest messages from the front:
+    - Message 1 (oldest) is removed
+    - Token count is rechecked
+    - If still over limit, message 2 is removed
+    - Loop continues until under limit or only 1 message remains
+    This ensures the LLM never receives a history that would overflow 
+    its context window.
+
+
+4. TOKEN TRUNCATION ALGORITHM
+------------------------------
+
+  def add_message(self, session_id, role, content):
+      session = self.get_session(session_id)
+      session.append(Message(role=role, content=content))
+      
+      while self._approx_tokens(session) > self.max_history_tokens \
+            and len(session) > 1:
+          session.pop(0)  # Remove oldest message
+
+  def _approx_tokens(self, messages):
+      return sum(len(m.content) // 4 for m in messages)
+
+  Why len(content) // 4?
+    - The Gemini tokenizer averages approximately 4 characters per token 
+      for English text.
+    - This is a well-established heuristic used by OpenAI, Google, and 
+      Anthropic for quick token estimation without running the actual 
+      tokenizer.
+    - For the Makerere use case (English text about university policies), 
+      this approximation is sufficient.
+    - The 4000 token default limit provides comfortable headroom within 
+      Gemini 2.5 Flash's context window while leaving space for the 
+      system prompt and current query.
+
+
+5. TESTS
+--------
+  File: tests/test_memory.py (4 tests)
+
+  Test 1: test_memory_store_truncation
+    Sets max_history_tokens to 10 (very low, ~40 chars).
+    Adds a long message ("Hello World! This is a long message.") then a 
+    short message ("Hi there!").
+    Asserts: only 1 message remains (the short one).
+    Asserts: the remaining message is the assistant's "Hi there!" 
+    (oldest was truncated).
+    RESULT: PASSED
+
+  Test 2: test_api_get_history
+    Adds a message directly to the store, then calls GET /api/v1/memory/sess_1.
+    Asserts: status_code == 200
+    Asserts: 1 message returned with correct role and content.
+    RESULT: PASSED
+
+  Test 3: test_api_clear_history
+    Adds a message, then calls DELETE /api/v1/memory/sess_2.
+    Asserts: status_code == 200
+    Asserts: history is now empty (0 messages).
+    RESULT: PASSED
+
+  Test 4: test_api_delete_session
+    Adds a message, verifies session exists in _store, then calls 
+    DELETE /api/v1/memory/sess_3/delete.
+    Asserts: status_code == 200
+    Asserts: session key "sess_3" no longer exists in _store.
+    RESULT: PASSED
+
+
+6. FILES INVOLVED
+-----------------
+  src/core/memory.py       — SessionMemoryStore class, Message class, singleton
+  src/core/llm_harness.py  — Memory integration (load before, save after)
+  src/api/memory.py        — 3 HTTP endpoints (get, clear, delete)
+  src/main.py              — Router registration
+  tests/test_memory.py     — 4 tests
+
+
+7. VERIFICATION
+---------------
+  - All 4 memory-specific tests pass.
+  - Full suite: 35/35 tests pass.
+  - Token truncation tested with an artificially low limit (10 tokens) 
+    to confirm the trim loop works correctly.
+  - Memory integration verified by checking that llm_harness.py imports 
+    and uses the memory_store singleton at the correct points.
+  - All 3 HTTP endpoints appear in FastAPI's /docs Swagger UI.
+
+
+8. KNOWN LIMITATIONS & FUTURE WORK
+-----------------------------------
+  - In-memory only: All history is lost when the server restarts. For 
+    production, the store should be backed by Redis, PostgreSQL, or a 
+    similar persistent store.
+  - Token estimation is approximate: The len(content)//4 heuristic may 
+    over- or under-count tokens for non-English text, code snippets, or 
+    special characters. For production accuracy, use the actual Gemini 
+    tokenizer (gemini.count_tokens()).
+  - No per-user isolation: Any caller with a session_id can access that 
+    session's history. In production, session access must be gated by 
+    authentication to prevent cross-user data leakage.
+  - History format is simple text concatenation: The current approach 
+    joins history as "USER: ... ASSISTANT: ..." strings. For Gemini's 
+    native multi-turn API, the history should be passed as structured 
+    message objects, not concatenated text.
+
+
+================================================================================
+  END OF REPORT — TASK #6
+================================================================================

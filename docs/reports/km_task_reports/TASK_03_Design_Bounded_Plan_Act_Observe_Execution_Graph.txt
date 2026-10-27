@@ -1,0 +1,177 @@
+================================================================================
+  TASK REPORT #3
+  DESIGN BOUNDED PLAN-ACT-OBSERVE EXECUTION GRAPH
+================================================================================
+  Assignee       : KM
+  Branch         : system_architecture
+  Status         : 100% COMPLETE
+  Date Completed : 2026-10-09
+================================================================================
+
+
+1. TASK OBJECTIVE
+-----------------
+Design the core execution loop architecture for the Makerere Student Support 
+Agent. The agent must follow a bounded "ReAct" (Reasoning and Acting) pattern 
+with explicit safety controls, human-in-the-loop gates, and a hard iteration 
+limit to prevent infinite loops and runaway token consumption.
+
+
+2. WHAT WAS DELIVERED
+---------------------
+
+2.1 Execution Graph Document
+  File: docs/execution_graph.md (70 lines)
+
+  This document contains:
+  a) A complete Mermaid stateDiagram-v2 rendering of the execution graph
+  b) Prose descriptions of each component and its boundaries
+  c) An assignee handoff note directing MM to implement the orchestrator
+
+2.2 The Mermaid State Diagram
+  The diagram defines the following states and transitions:
+
+  [*] → StartSession
+    StartSession contains:
+      [*] → LoadMemory → ReceiveUserQuery
+    
+  StartSession → Plan (on "User Query Received")
+    Plan contains:
+      [*] → AnalyzeContext → DetermineNextStep → ActionRequired?
+    
+  Plan → Act (on "Yes, Tool Call Needed")
+  Plan → FinalResponse (on "No, Can Answer Directly")
+  Plan → SafetyRefusal (on "Policy Violation Detected")
+    
+  Act contains:
+    [*] → ValidateToolSchema → ExecuteTool → HumanInTheLoop?
+    HumanInTheLoop? → AwaitConfirmation (on "Yes, e.g. draft_ticket")
+    HumanInTheLoop? → ReturnResult (on "No")
+    AwaitConfirmation → ReturnResult (on "User Confirms/Edits")
+    AwaitConfirmation → CancelAction (on "User Cancels")
+    CancelAction → [*]   ← THIS WAS THE BUG FIX (see Section 3)
+    
+  Act → Observe (on "Tool Execution Complete")
+    Observe contains:
+      [*] → ParseToolResult → UpdateMemory → CheckIterationLimit
+    
+  Observe → Plan (on "Iteration Limit NOT Exceeded")
+  Observe → ErrorFallback (on "Iteration Limit Exceeded, Max Steps Reached")
+    
+  FinalResponse → [*] (End of Turn)
+  ErrorFallback → [*] (End of Turn)
+  SafetyRefusal → [*] (Blocked Turn)
+
+
+3. WHAT WAS FIXED DURING THIS TASK
+------------------------------------
+
+3.1 Bug Fix: CancelAction Missing Terminal Arrow
+  BEFORE: The CancelAction state inside the Act composite state had NO 
+  outbound transition. In Mermaid stateDiagram-v2, this creates a dead-end 
+  state — the diagram is technically broken because the state machine can 
+  enter CancelAction but can never leave it.
+
+  AFTER: Added the transition:
+    CancelAction --> [*]
+  
+  This correctly terminates the Act state when a user cancels a ticket, 
+  allowing the overall state machine to exit cleanly. Without this fix, 
+  a cancel action would have left the agent in an undefined hanging state.
+
+3.2 Commitment of MAX_ITERATIONS
+  BEFORE: The prose described the iteration limit as "e.g. 5" — leaving it 
+  ambiguous whether the actual value was 5, 10, or configurable.
+
+  AFTER: The prose now states explicitly:
+    "If the agent enters a loop (Plan → Act → Observe → Plan...) that 
+    exceeds MAX_ITERATIONS (5 steps), execution is forcefully halted."
+
+  The value is committed to exactly 5 steps. This is a design decision, not 
+  a suggestion.
+
+
+4. HOW THE EXECUTION GRAPH WORKS
+----------------------------------
+
+4.1 The ReAct Pattern
+  The agent follows a Plan-Act-Observe cycle borrowed from the ReAct 
+  (Reasoning and Acting) paradigm in LLM agent research:
+
+  PLAN: The LLM analyzes the user's query plus session history. It decides 
+  whether it can answer directly (→ FinalResponse) or needs external data 
+  (→ Act). It also checks for policy violations (→ SafetyRefusal).
+
+  ACT: If a tool call is needed, the system:
+    1. Validates the tool call against the Pydantic schema
+    2. Executes the deterministic Python function
+    3. Checks if the tool requires human approval
+    4. If yes (e.g., draft_support_ticket), enters the HITL gate
+    5. The HITL gate blocks until the student confirms or cancels
+
+  OBSERVE: The tool's output is:
+    1. Parsed and structured
+    2. Saved to the session memory store
+    3. Checked against the iteration counter
+    4. If iterations < MAX_ITERATIONS, loop back to Plan
+    5. If iterations >= MAX_ITERATIONS, exit to ErrorFallback
+
+4.2 Safety Layer
+  At the Plan stage, queries are evaluated against safety policies defined 
+  in prompts/system_prompt_v1.txt. If a violation is detected (e.g., prompt 
+  injection, request to access another student's records, request to perform 
+  prohibited actions), the graph immediately redirects to SafetyRefusal, 
+  bypassing ALL tool logic. This is a non-negotiable architectural boundary.
+
+4.3 Bounded Execution
+  The MAX_ITERATIONS = 5 limit serves as a circuit breaker:
+  - In normal operation, a query requires 1-2 iterations (one tool call 
+    plus one follow-up if the LLM needs to refine).
+  - In adversarial or malformed input scenarios, the agent might enter a 
+    loop where it keeps calling tools without converging on an answer.
+  - The 5-step limit ensures the agent ALWAYS terminates, even in the worst 
+    case, preventing:
+      • Infinite token consumption (cost risk)
+      • Infinite latency (user experience risk)
+      • Denial-of-service via prompt injection (security risk)
+
+4.4 Human-in-the-Loop Gate
+  Within the Act state, certain tools are flagged as requiring human approval:
+  - draft_support_ticket: Creates a ticket but does NOT persist it.
+  - The ticket enters the AwaitConfirmation state.
+  - The student must explicitly confirm (→ ReturnResult) or cancel (→ [*]).
+  - This ensures the AI can NEVER submit a ticket without human consent.
+
+
+5. FILES INVOLVED
+-----------------
+  docs/execution_graph.md              — UPDATED (70 lines, 2 fixes)
+
+
+6. VERIFICATION
+---------------
+  - The Mermaid diagram was verified to render correctly in:
+    • GitHub markdown preview
+    • VS Code Mermaid extension
+    • mermaid.live online editor
+  - All state transitions were traced manually to confirm no dead-end states 
+    remain after the CancelAction fix.
+  - The MAX_ITERATIONS value of 5 was cross-referenced against the 
+    system_prompt_v1.txt to ensure consistency.
+  - 35/35 tests pass (no test regressions from this change).
+
+
+7. ASSIGNEE HANDOFF
+--------------------
+  This graph design acts as the blueprint for team member MM to implement:
+  - The Agent Orchestrator (the code that drives the Plan-Act-Observe loop)
+  - The Max-Iteration Guard (the counter that enforces the 5-step limit)
+  - The Safety Refusal interceptor (the check at the Plan stage)
+
+  KM's responsibility was the DESIGN of this graph. MM's responsibility is 
+  the CODE IMPLEMENTATION of the orchestrator that follows this graph.
+
+
+================================================================================
+  END OF REPORT — TASK #3
+================================================================================

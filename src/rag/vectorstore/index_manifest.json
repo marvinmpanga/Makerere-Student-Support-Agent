@@ -1,0 +1,501 @@
+{
+  "collection_name": "makerere_policies",
+  "chunk_tokens": 512,
+  "overlap_ratio": 0.1,
+  "embedder": "local:all-MiniLM-L6-v2",
+  "documents_indexed": 45,
+  "chunks_indexed": 1045,
+  "indexed_documents": [
+    {
+      "doc_id": "mak-policy-0004",
+      "title": "THE PUBLIC PROCUREMENT AND DISPOSAL OF PUBLIC ASSETS ACT, 2003",
+      "category": "financial-management-policies",
+      "chunks": 25,
+      "page_span": "1-32",
+      "sample_citation": "[mak-policy-0004, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/ACTS%20_SUPPLEMENT_PPDA_2003.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0005",
+      "title": "THE PUBLIC PROCUREMENT AND DISPOSAL OF PUBLIC ASSETS REGULATIONS, 2003",
+      "category": "financial-management-policies",
+      "chunks": 137,
+      "page_span": "1-199",
+      "sample_citation": "[mak-policy-0005, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/STATUTORY_%20INSTRUMENTS_PDDA_Regulations_2003.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0006",
+      "title": "HIV/AIDS Policy",
+      "category": "general-policies",
+      "chunks": 7,
+      "page_span": "1-11",
+      "sample_citation": "[mak-policy-0006, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/HIV_AIDS_Policy.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0007",
+      "title": "Makerere University College Statute 2026",
+      "category": "general-policies",
+      "chunks": 13,
+      "page_span": "1-29",
+      "sample_citation": "[mak-policy-0007, Pages 1-4]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/MAKERERE%20UNIVERSITY%20COLLEGE%20STATUTE%202026.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0009",
+      "title": "Policy and Regulations Against Sexual Harrasment",
+      "category": "general-policies",
+      "chunks": 10,
+      "page_span": "1-22",
+      "sample_citation": "[mak-policy-0009, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Policy-and-Regulations-Against-Sexual-Harassment-2018.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0010",
+      "title": "Quality Assurance Policy Framework",
+      "category": "general-policies",
+      "chunks": 68,
+      "page_span": "1-94",
+      "sample_citation": "[mak-policy-0010, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Quality_Assurance_Policy_0.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0012",
+      "title": "Transport Management Policy Guidelines",
+      "category": "general-policies",
+      "chunks": 12,
+      "page_span": "1-24",
+      "sample_citation": "[mak-policy-0012, Pages 1-4]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-University-Transport-Policy-Management-Guidelines-July2011.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0013",
+      "title": "Universities and other Tertiary Institutions Act Cap 262",
+      "category": "general-policies",
+      "chunks": 35,
+      "page_span": "1-80",
+      "sample_citation": "[mak-policy-0013, Pages 1-6]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/REVISED%20UOTIA%20CAP%20262%20AS%20OF%20JULY%202024_opt.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0014",
+      "title": "Gender Equality Policy",
+      "category": "governance-policies",
+      "chunks": 15,
+      "page_span": "1-19",
+      "sample_citation": "[mak-policy-0014, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-University-Gender-Equality-Policy-2009.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0018",
+      "title": "Policy & Regulations on Sexual Harassment Prevention",
+      "category": "governance-policies",
+      "chunks": 10,
+      "page_span": "1-22",
+      "sample_citation": "[mak-policy-0018, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Policy-and-Regulations-Against-Sexual-Harassment-2018_0.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0019",
+      "title": "Awarding the title Professor Emeritus",
+      "category": "human-resource-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0019, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/POLICY_ON_AWARDING_THE_TITLE_PROFESSOR_EMERITUS.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0021",
+      "title": "Honorary Awards Guidelines",
+      "category": "human-resource-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0021, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/MAKERERE_UNIVERSITY_HONORARY_AWARDS_GUIDELINES.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0025",
+      "title": "Policy on Appointment and Promotions of Academic Staff",
+      "category": "human-resource-policies",
+      "chunks": 34,
+      "page_span": "1-54",
+      "sample_citation": "[mak-policy-0025, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/POLICY%20_APPOINTMENT_%20AND%20_PROMOTION.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0026",
+      "title": "Reviewed Policy on Promotion Tracks for Academic staff May 2014",
+      "category": "human-resource-policies",
+      "chunks": 6,
+      "page_span": "1-13",
+      "sample_citation": "[mak-policy-0026, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Reviewed-Policy-on-promotion-tracks-for-academic-staff-May-2014.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0028",
+      "title": "Acceptable use of ICT Resourses",
+      "category": "ict-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0028, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Acceptable_Use_of_ICT_Resources.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0029",
+      "title": "Data Security",
+      "category": "ict-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0029, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Data_Security_Policy.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0030",
+      "title": "Directorate for ICT Support Strategic Plan 2020 - 2030",
+      "category": "ict-policies",
+      "chunks": 20,
+      "page_span": "1-33",
+      "sample_citation": "[mak-policy-0030, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-University-ICT-Strategic-Plan-2020-2030.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0031",
+      "title": "Disposal of ICT Equipment and Electronic Waste Management",
+      "category": "ict-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0031, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Disposal_of_ICT_Equipment_policy_Electronic_Waste_Management.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0032",
+      "title": "ICT Policy and Master Plan 2010-2014 (Expired)",
+      "category": "ict-policies",
+      "chunks": 20,
+      "page_span": "1-22",
+      "sample_citation": "[mak-policy-0032, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/ICT_Policy_Master_Plan_2010_2014.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0033",
+      "title": "Information and Communication Technology Policy (2016 - 2020) (Expired)",
+      "category": "ict-policies",
+      "chunks": 18,
+      "page_span": "1-37",
+      "sample_citation": "[mak-policy-0033, Pages 1-4]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/ICT%20POLICY%20%28APRIL%202016-2020%29.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0034",
+      "title": "The Makerere University Information and Communication Technology Policy Framework [Active/current policy]",
+      "category": "ict-policies",
+      "chunks": 31,
+      "page_span": "1-42",
+      "sample_citation": "[mak-policy-0034, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-University-Information-and-Communication-Technology-Policy-Framework-March%202020.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0035",
+      "title": "Masterplan for Makerere University Open, Distance & eLearning",
+      "category": "ict-policies",
+      "chunks": 77,
+      "page_span": "1-176",
+      "sample_citation": "[mak-policy-0035, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Masterplan-Makerere-University-Open-Distance-E-learning-full.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0036",
+      "title": "Physical ICT Security Policy",
+      "category": "ict-policies",
+      "chunks": 1,
+      "page_span": "1-2",
+      "sample_citation": "[mak-policy-0036, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Physical_ICT_Security_Policy.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0037",
+      "title": "Web Content Publishing",
+      "category": "ict-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0037, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Web_Content_Publishing_Policy.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0038",
+      "title": "Communications Policy 2013",
+      "category": "information-management-policies",
+      "chunks": 6,
+      "page_span": "1-13",
+      "sample_citation": "[mak-policy-0038, Pages 1-4]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-University-Communications-Policy-March-2013.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0040",
+      "title": "Audit Manual",
+      "category": "manuals",
+      "chunks": 74,
+      "page_span": "1-100",
+      "sample_citation": "[mak-policy-0040, Pages 1-6]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Audit%20Book.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0041",
+      "title": "Finance Manual",
+      "category": "manuals",
+      "chunks": 63,
+      "page_span": "1-138",
+      "sample_citation": "[mak-policy-0041, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Finance%20%20Manual.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0043",
+      "title": "Makerere University Academic Policies Manual 2025",
+      "category": "manuals",
+      "chunks": 110,
+      "page_span": "1-178",
+      "sample_citation": "[mak-policy-0043, Pages 1-6]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-Academic-Policies-Manual-Revised-Version-2025.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0044",
+      "title": "Procurement Manual",
+      "category": "manuals",
+      "chunks": 53,
+      "page_span": "1-96",
+      "sample_citation": "[mak-policy-0044, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Procurement%20%20Manual.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0045",
+      "title": "Research Manual",
+      "category": "manuals",
+      "chunks": 38,
+      "page_span": "3-57",
+      "sample_citation": "[mak-policy-0045, Pages 3-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Research%20Manual.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0047",
+      "title": "Policy on Establishment of Research Entities and Institutions",
+      "category": "research-policies",
+      "chunks": 20,
+      "page_span": "1-24",
+      "sample_citation": "[mak-policy-0047, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Policy-on-Establishment-of-Research-Entities.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0048",
+      "title": "Research and Innovations Policy 2008",
+      "category": "research-policies",
+      "chunks": 7,
+      "page_span": "1-11",
+      "sample_citation": "[mak-policy-0048, Pages 1-4]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/MAKERERE_UNIVERSITY_RESEARCH_POLICY_0.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0049",
+      "title": "University Research Agenda (2025/26-2029/30)",
+      "category": "research-policies",
+      "chunks": 14,
+      "page_span": "1-66",
+      "sample_citation": "[mak-policy-0049, Pages 1-9]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Mak-Research-Agenda-2025-2030.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0050",
+      "title": "Guild Constitution",
+      "category": "student-affairs-policies",
+      "chunks": 26,
+      "page_span": "1-40",
+      "sample_citation": "[mak-policy-0050, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/GUILD%20CONSTITUTION%20NEW.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0051",
+      "title": "Mak Students Guild Statute 2022",
+      "category": "student-affairs-policies",
+      "chunks": 10,
+      "page_span": "1-5",
+      "sample_citation": "[mak-policy-0051, Page 1]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Mak-Students-Guild-Statute-2022.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0052",
+      "title": "Makerere Career Guidance and Mentorship Policy",
+      "category": "student-affairs-policies",
+      "chunks": 7,
+      "page_span": "1-16",
+      "sample_citation": "[mak-policy-0052, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/MAKERERE-MENTORSHIP-POLICY-JUNE-2025.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0055",
+      "title": "Policy for Makerere University Student Work Scheme",
+      "category": "student-affairs-policies",
+      "chunks": 9,
+      "page_span": "1-16",
+      "sample_citation": "[mak-policy-0055, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Makerere-University-Student-Work-Scheme-Policy.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0056",
+      "title": "Rules on Examination Malpractice and Irregularities (Students)",
+      "category": "student-affairs-policies",
+      "chunks": 13,
+      "page_span": "1-17",
+      "sample_citation": "[mak-policy-0056, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Approved-Amended-Rules-on-Examination-Malpractices-and-Irregularities-March-2019.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0057",
+      "title": "Guidelines for Field Attachment",
+      "category": "teaching-and-learning-policies",
+      "chunks": 10,
+      "page_span": "1-19",
+      "sample_citation": "[mak-policy-0057, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/GUIDELINES_FOR_FIELD_ATTACHMENT.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0058",
+      "title": "Joint Awards between Makerere University",
+      "category": "teaching-and-learning-policies",
+      "chunks": 2,
+      "page_span": "1-3",
+      "sample_citation": "[mak-policy-0058, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Policy_on_Joint_Awards_between_Makerere_University.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0059",
+      "title": "Makerere University Intellectual Property Management Policy",
+      "category": "teaching-and-learning-policies",
+      "chunks": 17,
+      "page_span": "1-45",
+      "sample_citation": "[mak-policy-0059, Pages 1-5]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Intellectual-Property-Management-Policy-2024.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0063",
+      "title": "Remarking Students work and retention of scripts",
+      "category": "teaching-and-learning-policies",
+      "chunks": 1,
+      "page_span": "1-1",
+      "sample_citation": "[mak-policy-0063, Page 1]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Policy_on_remarking_students_work_and_retention_of_scripts.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0064",
+      "title": "Research and Innovation",
+      "category": "teaching-and-learning-policies",
+      "chunks": 7,
+      "page_span": "1-11",
+      "sample_citation": "[mak-policy-0064, Pages 1-4]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/MAKERERE_UNIVERSITY_RESEARCH_POLICY.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0065",
+      "title": "Roles and responsibilities for External Examiners",
+      "category": "teaching-and-learning-policies",
+      "chunks": 5,
+      "page_span": "1-8",
+      "sample_citation": "[mak-policy-0065, Pages 1-2]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/ROLES_AND_RESPONSIBILITIES_FOR%20EXTERNAL_EXAMINERS.pdf"
+    },
+    {
+      "doc_id": "mak-policy-0066",
+      "title": "Rules concerning Examination Malpractices (Staff)",
+      "category": "teaching-and-learning-policies",
+      "chunks": 2,
+      "page_span": "1-4",
+      "sample_citation": "[mak-policy-0066, Pages 1-3]",
+      "source_url": "https://policies.mak.ac.ug/sites/default/files/policies/Rules_concerning_Examination_Malpractices_staff.pdf"
+    }
+  ],
+  "skipped": [
+    {
+      "doc_id": "mak-policy-0001",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0002",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0003",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0008",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0011",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0015",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0016",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0017",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0020",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0022",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0023",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0024",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0027",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0039",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0042",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0046",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0053",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0054",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0060",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0061",
+      "reason": "no extractable text (scanned?)"
+    },
+    {
+      "doc_id": "mak-policy-0062",
+      "reason": "no extractable text (scanned?)"
+    }
+  ]
+}

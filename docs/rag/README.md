@@ -160,4 +160,19 @@ Every answer should log:
 
 ## Implementation status
 
-This repository currently contains the initial policy downloader and a baseline LLM harness. The next implementation stage adds the RAG indexing, retrieval, and grounded-response pipeline described here.
+### What is implemented (`src/core/rag_pipeline.py`, `src/api/rag.py`)
+
+- `KnowledgeIndex` class with `ingest_directory()` and `ingest_texts()` for offline ingestion
+- Character-level text chunking with configurable size and overlap
+- Keyword-based retrieval scoring (TF-IDF style term matching)
+- `build_grounded_prompt()` for evidence-grounded prompt composition
+- `answer()` method with evidence-sufficiency check and safe refusal on failure
+- `POST /api/v1/rag/answer` HTTP endpoint mounted and live
+
+### What is NOT yet implemented (next stage)
+
+- Real vector embeddings (no embedding model integrated; current retrieval uses keyword overlap)
+- Named embedding model or vector store (no Pinecone, ChromaDB, or similar)
+- Embedding generation step in the ingestion pipeline
+- Re-ranking and semantic similarity scoring
+- Trace logging per answer (chunk IDs, session ID, grounding verdict) as required by the evaluation spec

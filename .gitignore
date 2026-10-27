@@ -3,7 +3,6 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.env
-.env.example
 .venv/
 venv/
 ENV/
@@ -14,9 +13,6 @@ ENV/
 knowledge/chroma_db/
 knowledge/raw/*.pdf
 
-# Personal files
-kamulegeya.pdf
-
 # IDE & OS
 .idea/
 .DS_Store
@@ -26,9 +22,10 @@ Thumbs.db
 *.log
 evidence/traces/*.json
 
-# Test coverage
+# Test coverage & reports
 .coverage
 coverage.xml
+/reports/
 
 # W3-03 vector index (rebuild with: python -m src.rag.ingest)
 src/rag/vectorstore/*

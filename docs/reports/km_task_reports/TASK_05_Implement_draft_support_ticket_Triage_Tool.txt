@@ -1,0 +1,204 @@
+================================================================================
+  TASK REPORT #5
+  IMPLEMENT draft_support_ticket TRIAGE TOOL
+================================================================================
+  Assignee       : KM
+  Branch         : system_architecture
+  Status         : 100% COMPLETE
+  Date Completed : 2026-10-09
+================================================================================
+
+
+1. TASK OBJECTIVE
+-----------------
+Implement the draft_support_ticket triage tool — a function that creates a 
+structured support ticket draft for a student's issue. Critically, this tool 
+must NEVER persist the ticket directly. Instead, it creates a draft that 
+requires explicit student confirmation through the Human-in-the-Loop (HITL) 
+gate before it is submitted. The tool must be schema-validated, exposed via 
+HTTP API, connected to a pending ticket store, and thoroughly tested.
+
+
+2. WHAT WAS DELIVERED
+---------------------
+
+2.1 Pydantic Request/Response Schemas
+  File: src/schemas/tools.py
+
+  DraftSupportTicketRequest:
+    - student_id (str, required): The student submitting the ticket.
+    - issue_category (str, required): The category of the issue. Expected 
+      values include: "Academics", "Finance", "IT Support", "General".
+    - issue_description (str, required): A detailed free-text description 
+      of the student's issue.
+
+  DraftSupportTicketResponse:
+    - ticket_id (str, required): A newly generated unique ticket identifier 
+      in the format "TKT-XXXXXXXX" (8 hex characters from uuid4).
+    - status (str, required): Always "Drafted" — the ticket is NOT yet 
+      submitted.
+    - message (str, required): A confirmation message describing what was 
+      drafted (e.g., "Successfully drafted a Financial ticket for student 
+      123456. Pending human-in-the-loop confirmation.").
+    - student_confirmation_required (bool, default=True): ALWAYS True. This 
+      field exists as an explicit architectural signal to the agent 
+      orchestrator and the frontend that the ticket MUST go through the 
+      HITL confirmation gate before it can be persisted. This field was 
+      MISSING in the original schema and was added as part of this task.
+
+
+2.2 Core Tool Function
+  File: src/core/tools.py — function draft_support_ticket()
+
+  The function:
+    1. Generates a unique ticket_id using uuid4 (format: TKT-{8 hex chars})
+    2. Constructs a DraftSupportTicketResponse with:
+       - ticket_id: the generated ID
+       - status: "Drafted"
+       - message: a human-readable confirmation
+       - student_confirmation_required: True
+    3. Stores the draft in the PENDING_TICKETS dictionary (module-level)
+    4. Returns the response
+
+  PENDING_TICKETS Store:
+    Type: dict[str, DraftSupportTicketResponse]
+    Purpose: An in-memory key-value store that holds drafted tickets until 
+    they are either confirmed (submitted) or cancelled by the student.
+    Lifecycle:
+      - Created: when draft_support_ticket() is called
+      - Consumed: when confirm_ticket() is called (ticket is popped from 
+        the dict, regardless of whether confirmed or cancelled)
+      - Never persisted: if the server restarts, all pending tickets are 
+        lost (this is acceptable for the current prototype stage)
+
+
+2.3 HTTP API Endpoint
+  File: src/api/tools.py
+
+  Endpoint: POST /api/v1/tools/draft-ticket
+  Content-Type: application/json
+
+  Request Body:
+    {
+      "student_id": "123456",
+      "issue_category": "Financial",
+      "issue_description": "I need help understanding my tuition balance."
+    }
+
+  Response Body (200 OK):
+    {
+      "ticket_id": "TKT-A1B2C3D4",
+      "status": "Drafted",
+      "message": "Successfully drafted a Financial ticket for student 123456. 
+                  Pending human-in-the-loop confirmation.",
+      "student_confirmation_required": true
+    }
+
+  Error Responses:
+    422 Unprocessable Entity — If any required field is missing.
+    (Automatically handled by FastAPI's Pydantic validation.)
+
+
+2.4 Router Registration
+  File: src/main.py
+  
+  The tools router (which includes both student-status and draft-ticket) 
+  is registered at:
+    app.include_router(tools_router, prefix="/api/v1/tools")
+
+
+3. HOW IT WORKS (End-to-End Flow)
+----------------------------------
+
+  1. The agent orchestrator (or student frontend) calls 
+     POST /api/v1/tools/draft-ticket with the student's issue details.
+
+  2. FastAPI validates the request body against DraftSupportTicketRequest. 
+     If any required field (student_id, issue_category, issue_description) 
+     is missing, FastAPI returns HTTP 422 with detailed validation errors.
+
+  3. The validated request is passed to draft_support_ticket() in 
+     src/core/tools.py.
+
+  4. The function generates a unique ticket_id, creates the draft response, 
+     and stores it in PENDING_TICKETS[ticket_id].
+
+  5. The response is returned with student_confirmation_required=True, 
+     signaling that the ticket is NOT yet submitted.
+
+  6. The agent orchestrator or frontend must now present the draft to the 
+     student and ask for explicit confirmation.
+
+  7. When the student confirms or cancels, a separate call to 
+     POST /api/v1/hitl/confirm-ticket completes the flow (see Task #7).
+
+  WHY IT IS A "TRIAGE" TOOL:
+  - The tool triages the student's issue by:
+    a) Categorizing it (issue_category)
+    b) Attaching it to a student identity (student_id)
+    c) Generating a trackable ticket ID
+    d) Staging it for human review
+  - It does NOT solve the issue — it routes it to the appropriate support 
+    channel through the ticket system.
+
+  WHY CONFIRMATION IS MANDATORY:
+  - The system prompt explicitly prohibits the AI from taking irreversible 
+    actions without student consent.
+  - A support ticket, once submitted, enters the university's support queue 
+    and triggers workflows (staff assignment, SLA timers, notifications).
+  - The student must verify that the AI correctly understood their issue 
+    before the ticket enters the system.
+
+
+4. TESTS
+--------
+  File: tests/test_tools.py
+
+  Test 4: test_draft_support_ticket
+    Sends a complete draft-ticket request to the API.
+    Asserts: status_code == 200
+    Asserts: status == "Drafted"
+    Asserts: student_confirmation_required == True
+    Asserts: ticket_id starts with "TKT-"
+    RESULT: PASSED
+
+  Test 5: test_draft_support_ticket_missing_fields
+    Sends a request with only student_id (missing issue_category and 
+    issue_description).
+    Asserts: status_code == 422 (validation error)
+    RESULT: PASSED
+
+
+5. FILES INVOLVED
+-----------------
+  src/schemas/tools.py    — DraftSupportTicketRequest, DraftSupportTicketResponse
+  src/core/tools.py       — draft_support_ticket(), PENDING_TICKETS dict
+  src/api/tools.py        — POST /draft-ticket endpoint
+  src/main.py             — Router registration
+  tests/test_tools.py     — 2 tests for this tool
+
+
+6. VERIFICATION
+---------------
+  - Both draft-ticket tests pass.
+  - Full suite: 35/35 tests pass.
+  - The student_confirmation_required field is present in every draft 
+    response (verified by test assertion).
+  - The PENDING_TICKETS store correctly holds drafts until consumed by 
+    the HITL confirm-ticket endpoint (verified by test_hitl.py tests).
+  - The ticket_id format (TKT-{8 hex}) is verified by prefix assertion.
+
+
+7. RELATIONSHIP TO OTHER TASKS
+-------------------------------
+  - Task #1 (Architecture): The component-interfaces.md document specifies 
+    the exact JSON contract for this tool's input and output.
+  - Task #3 (Execution Graph): The graph shows draft_support_ticket 
+    triggering the HumanInTheLoop? decision point.
+  - Task #7 (HITL): The confirm-ticket endpoint consumes the drafts 
+    stored by this tool. Without this tool, HITL has nothing to confirm.
+
+
+================================================================================
+  END OF REPORT — TASK #5
+================================================================================
