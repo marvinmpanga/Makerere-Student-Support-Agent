@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import uuid
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 
+from src.core.tools import MOCK_STUDENT_DB, PENDING_TICKETS
 from src.schemas.api import (
     StudentStatusResponse,
     TicketConfirmRequest,
@@ -20,6 +21,19 @@ router = APIRouter(tags=["Student Records & Tickets"])
 @router.get("/student/{student_id}/status", response_model=StudentStatusResponse)
 def get_student_status(student_id: str) -> StudentStatusResponse:
     """Deterministic read-only lookup of student enrollment and financial status."""
+    record = MOCK_STUDENT_DB.get(student_id)
+    if record is not None:
+        return StudentStatusResponse(
+            student_id=student_id,
+            name=record.get("name", "Makerere Student"),
+            program=record.get("enrolled_program", "Bachelor of Science in Software Engineering (BSSE)"),
+            college=record.get("college", "College of Computing and Information Sciences (CoCIS)"),
+            year_of_study=record.get("year_of_study", 4),
+            status=record["status"],
+            financial_hold=record.get("financial_hold", False),
+            academic_warning=record.get("academic_warning", False),
+        )
+    # Default response for unknown students
     return StudentStatusResponse(
         student_id=student_id,
         name="Makerere Student",
@@ -38,7 +52,7 @@ def draft_support_ticket(payload: TicketDraftRequest) -> TicketDraftResponse:
     ticket_id = f"TKT-{payload.student_id}-{uuid.uuid4().hex[:6].upper()}"
     now_iso = datetime.now(timezone.utc).isoformat()
 
-    return TicketDraftResponse(
+    draft = TicketDraftResponse(
         ticket_id=ticket_id,
         student_id=payload.student_id,
         issue_category=payload.issue_category,
@@ -53,10 +67,29 @@ def draft_support_ticket(payload: TicketDraftRequest) -> TicketDraftResponse:
         created_at=now_iso,
     )
 
+    # Store in pending tickets for atomic consume on confirmation
+    PENDING_TICKETS[ticket_id] = draft
+
+    return draft
+
 
 @router.post("/tickets/confirm", response_model=TicketConfirmResponse)
 def confirm_support_ticket(payload: TicketConfirmRequest) -> TicketConfirmResponse:
-    """Human-in-the-loop explicit confirmation to dispatch or cancel a drafted ticket."""
+    """Human-in-the-loop explicit confirmation to dispatch or cancel a drafted ticket.
+
+    Performs an atomic pop from the pending tickets store. If the ticket has
+    already been consumed (submitted or cancelled), returns HTTP 404 to enforce
+    the idempotency guarantee documented in Appendix E of the engineering report.
+    """
+    # Atomic pop: ticket can only be consumed once
+    draft = PENDING_TICKETS.pop(payload.ticket_id, None)
+    if draft is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No pending ticket found for ID: {payload.ticket_id}. "
+            "It may have already been submitted or cancelled.",
+        )
+
     now_iso = datetime.now(timezone.utc).isoformat()
 
     if not payload.confirmed:

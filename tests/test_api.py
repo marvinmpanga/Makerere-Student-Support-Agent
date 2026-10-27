@@ -102,9 +102,17 @@ def test_ticket_draft_and_hitl_confirm_flow() -> None:
     assert confirm_data["status"] == "Submitted"
     assert confirm_data["dispatched_to"] is not None
 
-    # 3. Cancel
+    # 3. Double-confirm on already consumed ticket must return 404 (idempotent atomic pop)
+    double_confirm_res = client.post("/api/v1/tickets/confirm", json=confirm_payload)
+    assert double_confirm_res.status_code == 404
+
+    # 4. Cancel flow (requires drafting a ticket first)
+    cancel_draft_res = client.post("/api/v1/tickets/draft", json=draft_payload)
+    assert cancel_draft_res.status_code == 200
+    cancel_ticket_id = cancel_draft_res.json()["ticket_id"]
+
     cancel_payload = {
-        "ticket_id": ticket_id,
+        "ticket_id": cancel_ticket_id,
         "student_id": "2100701234",
         "confirmed": False,
     }
