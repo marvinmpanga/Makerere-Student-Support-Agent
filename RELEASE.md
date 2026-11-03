@@ -4,8 +4,8 @@
 - **Version:** `1.0.0`
 - **Release Date:** October 2026
 - **Status:** `PRODUCTION READY`
-- **Repository:** `https://github.com/mavn-bussiness/Makerere-Student-Support-Agent`
-- **Container Registry:** `ghcr.io/mavn-bussiness/makerere-student-support-agent:latest`
+- **Repository:** `https://github.com/marvinmpanga/Makerere-Student-Support-Agent`
+- **Container Registry:** `ghcr.io/marvinmpanga/makerere-student-support-agent:latest`
 
 ---
 
@@ -32,7 +32,7 @@ Run the entire application stack with a single command:
 
 ```bash
 # Clone the repository
-git clone https://github.com/mavn-bussiness/Makerere-Student-Support-Agent.git
+git clone https://github.com/marvinmpanga/Makerere-Student-Support-Agent.git
 cd Makerere-Student-Support-Agent
 
 # Boot container stack

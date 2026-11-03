@@ -9,6 +9,15 @@ from src.main import app
 client = TestClient(app)
 
 
+def _student_auth_headers() -> dict[str, str]:
+    response = client.post(
+        "/api/v1/auth/login",
+        json={"username": "student", "password": "student123"},
+    )
+    assert response.status_code == 200
+    return {"Authorization": f"Bearer {response.json()['token']}"}
+
+
 def test_root_endpoint() -> None:
     response = client.get("/")
     assert response.status_code == 200
@@ -18,12 +27,41 @@ def test_root_endpoint() -> None:
     assert "Makerere" in data["name"]
 
 
+def test_student_app_serves_ui_and_assets() -> None:
+    response = client.get("/app")
+    assert response.status_code == 200
+    assert "Student support" in response.text
+    assert "/static/styles.css" in response.text
+    assert "/static/app.js" in response.text
+    assert "/static/makerere-crest.png" in response.text
+    assert client.get("/static/styles.css").status_code == 200
+    assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/makerere-crest.png").status_code == 200
+
+
+def test_browser_root_serves_student_ui() -> None:
+    response = client.get("/", headers={"Accept": "text/html"})
+    assert response.status_code == 200
+    assert "Student support" in response.text
+
+
 def test_health_check_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "ok"
     assert data["version"] == "1.0.0"
+
+
+def test_docs_serve_swagger_ui_assets_locally() -> None:
+    response = client.get("/docs")
+    assert response.status_code == 200
+    assert "/docs-assets/swagger-ui-bundle.js" in response.text
+    assert "/docs-assets/swagger-ui.css" in response.text
+    assert "cdn.jsdelivr.net" not in response.text
+    assert client.get("/docs-assets/swagger-ui-bundle.js").status_code == 200
+    assert client.get("/docs-assets/swagger-ui.css").status_code == 200
+    assert client.get("/openapi.json").json()["openapi"] == "3.1.0"
 
 
 def test_chat_endpoint_safe_query() -> None:
@@ -67,7 +105,10 @@ def test_policy_search_endpoint() -> None:
 
 
 def test_student_status_endpoint() -> None:
-    response = client.get("/api/v1/student/2100701234/status")
+    response = client.get(
+        "/api/v1/student/2100701234/status",
+        headers=_student_auth_headers(),
+    )
     assert response.status_code == 200
     data = response.json()
     assert data["student_id"] == "2100701234"
@@ -83,7 +124,12 @@ def test_ticket_draft_and_hitl_confirm_flow() -> None:
         "issue_description": "Need assistance with missing marks on student portal.",
         "priority": "High",
     }
-    draft_res = client.post("/api/v1/tickets/draft", json=draft_payload)
+    auth_headers = _student_auth_headers()
+    draft_res = client.post(
+        "/api/v1/tickets/draft",
+        json=draft_payload,
+        headers=auth_headers,
+    )
     assert draft_res.status_code == 200
     draft_data = draft_res.json()
     assert draft_data["status"] == "Drafted"
@@ -96,18 +142,30 @@ def test_ticket_draft_and_hitl_confirm_flow() -> None:
         "student_id": "2100701234",
         "confirmed": True,
     }
-    confirm_res = client.post("/api/v1/tickets/confirm", json=confirm_payload)
+    confirm_res = client.post(
+        "/api/v1/tickets/confirm",
+        json=confirm_payload,
+        headers=auth_headers,
+    )
     assert confirm_res.status_code == 200
     confirm_data = confirm_res.json()
     assert confirm_data["status"] == "Submitted"
     assert confirm_data["dispatched_to"] is not None
 
     # 3. Double-confirm on already consumed ticket must return 404 (idempotent atomic pop)
-    double_confirm_res = client.post("/api/v1/tickets/confirm", json=confirm_payload)
+    double_confirm_res = client.post(
+        "/api/v1/tickets/confirm",
+        json=confirm_payload,
+        headers=auth_headers,
+    )
     assert double_confirm_res.status_code == 404
 
     # 4. Cancel flow (requires drafting a ticket first)
-    cancel_draft_res = client.post("/api/v1/tickets/draft", json=draft_payload)
+    cancel_draft_res = client.post(
+        "/api/v1/tickets/draft",
+        json=draft_payload,
+        headers=auth_headers,
+    )
     assert cancel_draft_res.status_code == 200
     cancel_ticket_id = cancel_draft_res.json()["ticket_id"]
 
@@ -116,7 +174,11 @@ def test_ticket_draft_and_hitl_confirm_flow() -> None:
         "student_id": "2100701234",
         "confirmed": False,
     }
-    cancel_res = client.post("/api/v1/tickets/confirm", json=cancel_payload)
+    cancel_res = client.post(
+        "/api/v1/tickets/confirm",
+        json=cancel_payload,
+        headers=auth_headers,
+    )
     assert cancel_res.status_code == 200
     cancel_data = cancel_res.json()
     assert cancel_data["status"] == "Cancelled"

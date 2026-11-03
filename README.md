@@ -41,6 +41,28 @@ curl http://localhost:8000/health
 ```
 
 Interactive API documentation is accessible at **`http://localhost:8000/docs`**.
+Swagger UI assets are served by the application, so the interactive docs do not rely on an external CDN.
+For the student-facing interface, open **`http://localhost:8000/`** (or **`/app`**).
+The home page lets students ask policy questions and explains how answers are checked; `/docs` remains for developers testing endpoints.
+
+### Authentication, RBAC, and rate limiting
+
+The application now includes a lightweight, reproducible auth layer for demo and operational use:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "student", "password": "student123"}'
+```
+
+The response contains a bearer token that can be used on protected actions:
+
+```bash
+curl http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer <token>"
+```
+
+The API also enforces a per-client rate limit and writes a JSONL audit trail to `evidence/traces/audit.jsonl` for operational observation and troubleshooting.
 
 ---
 
@@ -58,6 +80,12 @@ curl -X POST http://localhost:8000/api/v1/chat \
 ```
 
 Returns grounded advice with verified `[Doc_ID, Page N]` policy citations.
+
+### How the student support app works
+
+The browser UI sends a student's question to `POST /api/v1/chat`. The API applies institutional refusal and prompt-injection checks before the agent searches the approved policy collection. When it finds relevant policy material, the response includes citations; when it cannot ground an answer, it directs the student to an appropriate university office rather than presenting a guess as policy. The UI shows the result, its citations, and any safety/escalation notice.
+
+The chat screen is separate from `/docs`, which is an interactive API testing tool. The current chat API does not provide multi-turn conversational memory, and student status/ticket routes use demo data and workflows; do not treat them as official records or submit sensitive information.
 
 ### Institutional Boundary Enforcement
 

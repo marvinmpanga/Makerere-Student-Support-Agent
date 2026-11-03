@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import uuid
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from src.core.auth import require_role
 from src.core.tools import MOCK_STUDENT_DB, PENDING_TICKETS
 from src.schemas.api import (
     StudentStatusResponse,
@@ -19,7 +20,10 @@ router = APIRouter(tags=["Student Records & Tickets"])
 
 
 @router.get("/student/{student_id}/status", response_model=StudentStatusResponse)
-def get_student_status(student_id: str) -> StudentStatusResponse:
+def get_student_status(
+    student_id: str,
+    _: dict = Depends(require_role("student", "staff", "admin")),
+) -> StudentStatusResponse:
     """Deterministic read-only lookup of student enrollment and financial status."""
     record = MOCK_STUDENT_DB.get(student_id)
     if record is not None:
@@ -47,7 +51,10 @@ def get_student_status(student_id: str) -> StudentStatusResponse:
 
 
 @router.post("/tickets/draft", response_model=TicketDraftResponse)
-def draft_support_ticket(payload: TicketDraftRequest) -> TicketDraftResponse:
+def draft_support_ticket(
+    payload: TicketDraftRequest,
+    _: dict = Depends(require_role("student", "staff", "admin")),
+) -> TicketDraftResponse:
     """Draft an administrative support ticket awaiting student review and confirmation."""
     ticket_id = f"TKT-{payload.student_id}-{uuid.uuid4().hex[:6].upper()}"
     now_iso = datetime.now(timezone.utc).isoformat()
@@ -74,7 +81,10 @@ def draft_support_ticket(payload: TicketDraftRequest) -> TicketDraftResponse:
 
 
 @router.post("/tickets/confirm", response_model=TicketConfirmResponse)
-def confirm_support_ticket(payload: TicketConfirmRequest) -> TicketConfirmResponse:
+def confirm_support_ticket(
+    payload: TicketConfirmRequest,
+    _: dict = Depends(require_role("student", "staff", "admin")),
+) -> TicketConfirmResponse:
     """Human-in-the-loop explicit confirmation to dispatch or cancel a drafted ticket.
 
     Performs an atomic pop from the pending tickets store. If the ticket has
