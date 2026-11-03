@@ -41,6 +41,7 @@ curl http://localhost:8000/health
 ```
 
 Interactive API documentation is accessible at **`http://localhost:8000/docs`**.
+Swagger UI assets are served by the application, so the interactive docs do not rely on an external CDN.
 
 ---
 

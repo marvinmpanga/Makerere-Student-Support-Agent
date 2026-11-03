@@ -2,8 +2,14 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
+import swagger_ui
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.openapi.docs import get_swagger_ui_html
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.api import api_router
@@ -30,9 +36,28 @@ app = FastAPI(
         "Provides bounded Plan-Act-Observe orchestration, grounded ChromaDB RAG with mandatory citations, "
         "adversarial prompt-injection defense, and non-negotiable institutional refusal guardrails."
     ),
-    docs_url="/docs",
+    docs_url=None,
     redoc_url="/redoc",
 )
+
+app.mount(
+    "/docs-assets",
+    StaticFiles(directory=Path(swagger_ui.__file__).parent / "static"),
+    name="swagger-ui",
+)
+
+
+@app.get("/docs", include_in_schema=False)
+def swagger_ui() -> HTMLResponse:
+    """Serve Swagger UI with assets hosted by this application."""
+    return get_swagger_ui_html(
+        openapi_url=app.openapi_url or "",
+        title=f"{app.title} - Swagger UI",
+        swagger_js_url="/docs-assets/swagger-ui-bundle.js",
+        swagger_css_url="/docs-assets/swagger-ui.css",
+        swagger_favicon_url="/docs-assets/favicon-32x32.png",
+    )
+
 
 # Enable CORS for web and client frontends
 app.add_middleware(

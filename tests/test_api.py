@@ -26,6 +26,17 @@ def test_health_check_endpoint() -> None:
     assert data["version"] == "1.0.0"
 
 
+def test_docs_serve_swagger_ui_assets_locally() -> None:
+    response = client.get("/docs")
+    assert response.status_code == 200
+    assert "/docs-assets/swagger-ui-bundle.js" in response.text
+    assert "/docs-assets/swagger-ui.css" in response.text
+    assert "cdn.jsdelivr.net" not in response.text
+    assert client.get("/docs-assets/swagger-ui-bundle.js").status_code == 200
+    assert client.get("/docs-assets/swagger-ui.css").status_code == 200
+    assert client.get("/openapi.json").json()["openapi"] == "3.1.0"
+
+
 def test_chat_endpoint_safe_query() -> None:
     payload = {"query": "How do I register for courses this semester?", "session_id": "test_sess_01"}
     response = client.post("/api/v1/chat", json=payload)
