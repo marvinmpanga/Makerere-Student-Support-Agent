@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.api import api_router
+from src.ui.portal import get_portal_html
 
 
 class Settings(BaseSettings):
@@ -64,15 +66,25 @@ except ImportError:
 
 
 @app.get("/", tags=["System"])
-def read_root() -> dict[str, str]:
-    """Root metadata endpoint."""
+def read_root(request: Request):
+    """Root metadata endpoint or interactive Web UI if opened in browser."""
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept:
+        return HTMLResponse(get_portal_html())
     return {
         "name": settings.app_name,
         "version": settings.version,
         "environment": settings.environment,
         "status": "online",
         "docs_url": "/docs",
+        "portal_url": "/ui",
     }
+
+
+@app.get("/ui", response_class=HTMLResponse, tags=["Web Portal"])
+def get_ui() -> HTMLResponse:
+    """Interactive Web Portal for students and administrators."""
+    return HTMLResponse(get_portal_html())
 
 
 @app.get("/health", tags=["System"])

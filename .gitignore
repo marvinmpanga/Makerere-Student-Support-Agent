@@ -32,3 +32,10 @@ src/rag/vectorstore/*
 !src/rag/vectorstore/.gitkeep
 .venv/
 !src/rag/vectorstore/index_manifest.json
+
+# Capstone Final Consolidated Word Reports
+BSE4104_*.docx
+BSE4104_Final_Engineering_and_Release_Report_Weeks_6_7_8.docx
+
+Makerere_Student_Support_Agent_Architecture_and_Team_Report.docx
+Makerere_Student_Support_Agent_*.docx
