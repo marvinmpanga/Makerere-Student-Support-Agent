@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from pathlib import Path
 
 import swagger_ui
@@ -13,6 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from src.api import api_router
+from src.core.audit import AuditLogger
+from src.core.rate_limit import InMemoryRateLimiter
 
 
 class Settings(BaseSettings):
@@ -28,6 +31,8 @@ class Settings(BaseSettings):
 
 settings = Settings()
 WEB_DIR = Path(__file__).parent / "static"
+rate_limiter = InMemoryRateLimiter(default_limit=300, default_window_seconds=60)
+audit_logger = AuditLogger()
 
 app = FastAPI(
     title=settings.app_name,
@@ -48,6 +53,50 @@ app.mount(
     StaticFiles(directory=Path(swagger_ui.__file__).parent / "static"),
     name="swagger-ui",
 )
+
+
+@app.middleware("http")
+async def security_and_observability_middleware(request: Request, call_next):
+    """Apply rate limiting and record a JSONL audit trail for each request."""
+    started_at = time.perf_counter()
+    route = request.url.path
+    client_ip = request.client.host if request.client else "unknown"
+
+    public_paths = {"/health", "/", "/app", "/docs", "/redoc"}
+    if not any(route == path or route.startswith("/docs-assets") or route.startswith("/static") for path in public_paths):
+        allowed, retry_after = rate_limiter.allow(client_ip)
+        if not allowed:
+            elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+            audit_logger.log(
+                {
+                    "event": "rate_limit_blocked",
+                    "method": request.method,
+                    "path": route,
+                    "client_ip": client_ip,
+                    "status_code": 429,
+                    "duration_ms": round(elapsed_ms, 3),
+                    "retry_after": retry_after,
+                }
+            )
+            response = JSONResponse({"detail": "Rate limit exceeded. Please retry shortly."}, status_code=429)
+            response.headers["Retry-After"] = str(retry_after)
+            return response
+
+    response = await call_next(request)
+    elapsed_ms = (time.perf_counter() - started_at) * 1000.0
+    user_name = getattr(getattr(request, "state", None), "user", {}).get("sub") if hasattr(request, "state") else None
+    audit_logger.log(
+        {
+            "event": "http_request",
+            "method": request.method,
+            "path": route,
+            "client_ip": client_ip,
+            "status_code": response.status_code,
+            "duration_ms": round(elapsed_ms, 3),
+            "user": user_name,
+        }
+    )
+    return response
 
 
 @app.get("/docs", include_in_schema=False)

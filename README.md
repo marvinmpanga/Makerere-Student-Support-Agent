@@ -45,6 +45,25 @@ Swagger UI assets are served by the application, so the interactive docs do not 
 For the student-facing interface, open **`http://localhost:8000/`** (or **`/app`**).
 The home page lets students ask policy questions and explains how answers are checked; `/docs` remains for developers testing endpoints.
 
+### Authentication, RBAC, and rate limiting
+
+The application now includes a lightweight, reproducible auth layer for demo and operational use:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "student", "password": "student123"}'
+```
+
+The response contains a bearer token that can be used on protected actions:
+
+```bash
+curl http://localhost:8000/api/v1/auth/me \
+  -H "Authorization: Bearer <token>"
+```
+
+The API also enforces a per-client rate limit and writes a JSONL audit trail to `evidence/traces/audit.jsonl` for operational observation and troubleshooting.
+
 ---
 
 ## 2. Querying the Agent API

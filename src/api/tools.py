@@ -1,5 +1,6 @@
-﻿from fastapi import APIRouter
+﻿from fastapi import APIRouter, Depends
 
+from src.core.auth import require_role
 from src.core.tools import draft_support_ticket, get_student_status
 from src.schemas.tools import (
     DraftSupportTicketRequest,
@@ -12,7 +13,10 @@ router = APIRouter(tags=["tools"])
 
 
 @router.post("/student-status", response_model=GetStudentStatusResponse)
-def student_status(request: GetStudentStatusRequest):
+def student_status(
+    request: GetStudentStatusRequest,
+    _: dict = Depends(require_role("student", "staff", "admin")),
+):
     """
     Read-only deterministic lookup of a student's status.
     """
@@ -20,7 +24,10 @@ def student_status(request: GetStudentStatusRequest):
 
 
 @router.post("/draft-ticket", response_model=DraftSupportTicketResponse)
-def create_draft_ticket(request: DraftSupportTicketRequest):
+def create_draft_ticket(
+    request: DraftSupportTicketRequest,
+    _: dict = Depends(require_role("student", "staff", "admin")),
+):
     """
     Draft a support ticket.
     This does NOT persist the ticket. It requires explicit HITL confirmation.
