@@ -5,10 +5,10 @@ from __future__ import annotations
 from pathlib import Path
 
 import swagger_ui
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.docs import get_swagger_ui_html
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -27,6 +27,7 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+WEB_DIR = Path(__file__).parent / "static"
 
 app = FastAPI(
     title=settings.app_name,
@@ -39,6 +40,8 @@ app = FastAPI(
     docs_url=None,
     redoc_url="/redoc",
 )
+
+app.mount("/static", StaticFiles(directory=WEB_DIR), name="student-ui")
 
 app.mount(
     "/docs-assets",
@@ -88,16 +91,24 @@ except ImportError:
     pass
 
 
-@app.get("/", tags=["System"])
-def read_root() -> dict[str, str]:
-    """Root metadata endpoint."""
-    return {
+@app.get("/", tags=["System"], response_model=None)
+def read_root(request: Request) -> FileResponse | JSONResponse:
+    """Serve the student UI to browsers and retain JSON metadata for API clients."""
+    if "text/html" in request.headers.get("accept", ""):
+        return FileResponse(WEB_DIR / "index.html")
+    return JSONResponse({
         "name": settings.app_name,
         "version": settings.version,
         "environment": settings.environment,
         "status": "online",
         "docs_url": "/docs",
-    }
+    })
+
+
+@app.get("/app", response_class=HTMLResponse, include_in_schema=False, response_model=None)
+def student_app() -> FileResponse:
+    """Serve the student-facing support interface directly."""
+    return FileResponse(WEB_DIR / "index.html")
 
 
 @app.get("/health", tags=["System"])

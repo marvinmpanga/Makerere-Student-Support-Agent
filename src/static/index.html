@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#00843d">
+    <meta name="description" content="Get Makerere student support and policy guidance.">
+    <title>Student Support | Makerere University</title>
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Main navigation">
+        <a class="brand" href="/" aria-label="Makerere University Student Support home">
+          <img class="brand-logo" src="/static/makerere-crest.png" alt="Makerere University crest">
+          <span class="brand-copy">
+            <strong>Makerere</strong>
+            <small>STUDENT SUPPORT</small>
+          </span>
+        </a>
+
+        <button class="new-chat" id="new-chat" type="button">
+          <span aria-hidden="true">＋</span> New question
+        </button>
+        <div class="sidebar-divider"></div>
+        <div class="sidebar-label">SUPPORT</div>
+        <button class="nav-link active" id="chat-nav" type="button" aria-current="page">
+          <span class="nav-icon" aria-hidden="true">◉</span> Ask a question
+        </button>
+        <button class="nav-link" id="guide-nav" type="button">
+          <span class="nav-icon" aria-hidden="true">ⓘ</span> How it works
+        </button>
+
+        <div class="sidebar-bottom">
+          <div class="help-card">
+            <strong>Need official help?</strong>
+            <p>Contact your College Registrar or Student Affairs for an official decision.</p>
+          </div>
+          <a class="docs-link" href="/docs" target="_blank" rel="noreferrer">API testing <span aria-hidden="true">↗</span></a>
+          <div class="sidebar-foot">
+            <span class="online-dot" aria-hidden="true"></span>
+            Makerere Support Assistant
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div class="mobile-brand">
+            <img class="mobile-logo" src="/static/makerere-crest.png" alt="">
+            <strong>Makerere Support</strong>
+          </div>
+          <div class="topbar-context" id="page-context">Student support</div>
+          <button class="mobile-guide-link" id="mobile-guide-nav" type="button">How it works</button>
+        </header>
+
+        <section class="view active" id="chat-view" aria-label="Student support chat">
+          <div class="conversation" id="conversation">
+            <div class="welcome-screen" id="welcome-screen">
+              <img class="welcome-logo" src="/static/makerere-crest.png" alt="">
+              <p class="welcome-kicker">MAKERERE UNIVERSITY</p>
+              <h1>What can I help you with?</h1>
+              <p class="welcome-copy">Ask about student policies, registration, fees, results, and where to get support.</p>
+              <div class="suggestions" aria-label="Suggested questions">
+                <button class="suggestion" type="button">
+                  <span class="suggestion-title">Course registration</span>
+                  <span>How do I register for courses?</span>
+                </button>
+                <button class="suggestion" type="button">
+                  <span class="suggestion-title">Tuition guidance</span>
+                  <span>Where can I find tuition payment guidance?</span>
+                </button>
+                <button class="suggestion" type="button">
+                  <span class="suggestion-title">Results support</span>
+                  <span>What should I do if my results are missing?</span>
+                </button>
+              </div>
+            </div>
+            <div class="messages" id="messages" aria-live="polite" aria-label="Conversation"></div>
+          </div>
+
+          <div class="composer-dock">
+            <div class="notice" role="note">
+              <span class="notice-icon" aria-hidden="true">i</span>
+              <p>Guidance is based on available policies—not an official student record. Don’t share passwords or sensitive personal information.</p>
+            </div>
+            <form class="composer" id="chat-form">
+              <label class="sr-only" for="question">Your question</label>
+              <textarea id="question" name="question" rows="1" maxlength="2000" placeholder="Message Makerere Student Support…" required></textarea>
+              <div class="composer-footer">
+                <span class="input-hint">Press Enter to send · Shift + Enter for a new line</span>
+                <button class="send-button" id="send-button" type="submit" aria-label="Send message">
+                  <span class="send-icon" aria-hidden="true">↑</span>
+                </button>
+              </div>
+            </form>
+            <p class="fine-print">AI guidance can be incomplete. Verify important matters with the appropriate university office.</p>
+          </div>
+        </section>
+
+        <section class="view guide-view" id="guide-view" aria-labelledby="guide-title" hidden>
+          <div class="guide-content">
+            <p class="welcome-kicker">MAKERERE UNIVERSITY · STUDENT SUPPORT</p>
+            <h1 id="guide-title">How your support assistant works</h1>
+            <p class="guide-intro">The assistant is a starting point for policy guidance—not a replacement for university staff or official systems.</p>
+            <div class="steps">
+              <article class="step-card"><span class="step-number">01</span><div><h2>You ask</h2><p>Write a question about student support or university policy. Avoid sharing passwords or sensitive personal details.</p></div></article>
+              <article class="step-card"><span class="step-number">02</span><div><h2>Safety comes first</h2><p>The API checks for requests outside its support role before answering.</p></div></article>
+              <article class="step-card"><span class="step-number">03</span><div><h2>Policy sources are searched</h2><p>The agent looks for relevant passages in its available policy collection. References appear below the answer.</p></div></article>
+              <article class="step-card"><span class="step-number">04</span><div><h2>You get guidance—or a referral</h2><p>If sources don’t support an answer, the assistant says so and may recommend contacting the appropriate university office.</p></div></article>
+            </div>
+            <div class="guide-callout">
+              <strong>What this demo does not do</strong>
+              <p>It does not authenticate students or connect to official student records. Status and ticket workflows use demo data and are not official submissions.</p>
+            </div>
+            <button class="primary-button" id="back-to-chat" type="button">Back to chat <span aria-hidden="true">→</span></button>
+          </div>
+        </section>
+      </main>
+    </div>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>

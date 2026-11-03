@@ -18,6 +18,24 @@ def test_root_endpoint() -> None:
     assert "Makerere" in data["name"]
 
 
+def test_student_app_serves_ui_and_assets() -> None:
+    response = client.get("/app")
+    assert response.status_code == 200
+    assert "Student support" in response.text
+    assert "/static/styles.css" in response.text
+    assert "/static/app.js" in response.text
+    assert "/static/makerere-crest.png" in response.text
+    assert client.get("/static/styles.css").status_code == 200
+    assert client.get("/static/app.js").status_code == 200
+    assert client.get("/static/makerere-crest.png").status_code == 200
+
+
+def test_browser_root_serves_student_ui() -> None:
+    response = client.get("/", headers={"Accept": "text/html"})
+    assert response.status_code == 200
+    assert "Student support" in response.text
+
+
 def test_health_check_endpoint() -> None:
     response = client.get("/health")
     assert response.status_code == 200
