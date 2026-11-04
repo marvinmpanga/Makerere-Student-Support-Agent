@@ -48,80 +48,37 @@ guideNav.addEventListener("click", () => showView("guide"));
 mobileGuideNav.addEventListener("click", () => showView(guideView.hidden ? "guide" : "chat"));
 document.getElementById("back-to-chat").addEventListener("click", () => showView("chat"));
 
-function appendInlineText(parent, text) {
-  const emphasis = /\*\*([^*]+)\*\*/g;
-  let start = 0;
-  let match;
-
-  while ((match = emphasis.exec(text)) !== null) {
-    parent.append(document.createTextNode(text.slice(start, match.index)));
-    const strong = document.createElement("strong");
-    strong.textContent = match[1];
-    parent.append(strong);
-    start = emphasis.lastIndex;
+function parseMarkdown(markdownText) {
+  if (typeof marked !== "undefined" && typeof marked.parse === "function") {
+    return marked.parse(markdownText);
   }
-
-  parent.append(document.createTextNode(text.slice(start)));
+  // Simple fallback parser if marked CDN fails to load
+  let html = markdownText
+    .replace(/^### (.*$)/gim, "<h3>$1</h3>")
+    .replace(/^## (.*$)/gim, "<h2>$1</h2>")
+    .replace(/^# (.*$)/gim, "<h1>$1</h1>")
+    .replace(/\*\*(.*?)\*\*/gim, "<strong>$1</strong>")
+    .replace(/\*(.*?)\*/gim, "<em>$1</em>")
+    .replace(/^\* (.*$)/gim, "<li>$1</li>")
+    .replace(/^\- (.*$)/gim, "<li>$1</li>")
+    .replace(/\n\n+/gim, "</p><p>")
+    .replace(/\n/gim, "<br>");
+  return `<p>${html}</p>`.replace(/<p><\/p>/g, "");
 }
 
-function appendFormattedText(parent, text) {
-  const paragraphs = text.trim().split(/\n\s*\n/);
-  for (const paragraph of paragraphs) {
-    const lines = paragraph.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
-    if (!lines.length) continue;
-
-    const heading = lines.length === 1 ? lines[0].match(/^#{1,3}\s+(.+)$/) : null;
-    if (heading) {
-      const element = document.createElement("h3");
-      appendInlineText(element, heading[1]);
-      parent.append(element);
-      continue;
-    }
-
-    const isList = lines.every((line) => /^([-*]|\d+[.)])\s+/.test(line));
-    if (isList) {
-      const ordered = /^\d+[.)]\s+/.test(lines[0]);
-      const list = document.createElement(ordered ? "ol" : "ul");
-      for (const line of lines) {
-        const item = document.createElement("li");
-        appendInlineText(item, line.replace(/^([-*]|\d+[.)])\s+/, ""));
-        list.append(item);
-      }
-      parent.append(list);
-      continue;
-    }
-
-    const element = document.createElement("p");
-    lines.forEach((line, index) => {
-      if (index) element.append(document.createElement("br"));
-      appendInlineText(element, line);
-    });
-    parent.append(element);
-  }
-}
-
-function citationKey(value) {
-  return value.toLowerCase().replace(/[\[\]\s.,;:()_-]/g, "");
-}
-
-function renderAnswer(parent, text, citations) {
+function prepareAnswerContent(text, citations) {
   const citationPattern = /\[([A-Za-z0-9_\-]+,\s*Pages?\s+\d+(?:-\d+)?)\]/gi;
-  const references = (citations || []).map((citation) => ({
-    citation: String(citation).replace(/^\[|\]$/g, ""),
+  const references = (citations || []).map((c) => ({
+    citation: String(c).replace(/^\[|\]$/g, ""),
     title: "",
   }));
 
-  // Clean raw prefixes if present
   let cleanText = text.trim();
-  const rawPrefix = /^According to official Makerere University policy:\s*/i;
-  const rawPrefix2 = /^Based on official Makerere University policy[,:]?\s*(here is the relevant guidance[^:]*:\s*)?/i;
-  cleanText = cleanText.replace(rawPrefix, "").replace(rawPrefix2, "");
-
-  // Strip trailing "Sources: ..." list from the body because we display references separately
+  cleanText = cleanText.replace(/^According to official Makerere University policy:\s*/i, "");
+  cleanText = cleanText.replace(/^Based on official Makerere University policy[,:]?\s*(here is the relevant guidance[^:]*:\s*)?/i, "");
   cleanText = cleanText.replace(/\n*\s*\*\*Sources:\*\*[\s\S]*$/i, "");
   cleanText = cleanText.replace(/\n*\s*Sources?:\s*\[?[mak-policy-[\s\S]*$/i, "");
 
-  // Map any inline citations to clean numerical footnotes
   let footnoteMap = new Map();
   cleanText = cleanText.replace(citationPattern, (match, tag) => {
     let cleanTag = tag.trim();
@@ -134,38 +91,82 @@ function renderAnswer(parent, text, citations) {
       footnoteMap.set(cleanTag, refIdx + 1);
     }
     const num = footnoteMap.get(cleanTag);
-    return ` **[${num}]**`;
+    return `<sup class="footnote-ref" title="${cleanTag}">[${num}]</sup>`;
   });
 
-  // Render the formatted answer
-  appendFormattedText(parent, cleanText);
+  return { html: parseMarkdown(cleanText), rawText: cleanText, references };
+}
 
-  // Render references in a neat collapsible section
-  if (references.length) {
-    const details = document.createElement("details");
-    details.className = "references";
-    details.style.marginTop = "0.75rem";
-    details.style.fontSize = "0.85rem";
-    const summary = document.createElement("summary");
-    summary.style.cursor = "pointer";
-    summary.style.fontWeight = "600";
-    summary.style.color = "var(--color-primary, #006633)";
-    summary.textContent = `Official Policy Sources (${references.length})`;
-    const list = document.createElement("ol");
-    list.className = "references-list";
-    list.style.paddingLeft = "1.25rem";
-    list.style.marginTop = "0.4rem";
-    references.forEach((reference) => {
-      const item = document.createElement("li");
-      item.style.marginBottom = "0.25rem";
-      item.textContent = reference.title
-        ? `${reference.title} - ${reference.citation}`
-        : reference.citation;
-      list.append(item);
-    });
-    details.append(summary, list);
-    parent.append(details);
+function createTypewriterEffect(element, fullHtml, onComplete) {
+  // Real-time streaming simulation: reveals words in smooth natural cadence
+  const tempDiv = document.createElement("div");
+  tempDiv.innerHTML = fullHtml;
+  const fullText = tempDiv.innerText || tempDiv.textContent || "";
+  
+  if (fullText.length < 50) {
+    element.innerHTML = fullHtml;
+    if (onComplete) onComplete();
+    return;
   }
+
+  element.innerHTML = '<span class="typewriter-cursor"></span>';
+  let charIndex = 0;
+  const totalChars = fullHtml.length;
+  const chunkStep = 5; // characters per tick for smooth streaming
+
+  const timer = setInterval(() => {
+    charIndex = Math.min(charIndex + chunkStep, totalChars);
+    // Find nearest safe HTML tag boundary
+    let safeSubstr = fullHtml.slice(0, charIndex);
+    // If inside a tag, extend to closing '>'
+    const lastOpen = safeSubstr.lastIndexOf("<");
+    const lastClose = safeSubstr.lastIndexOf(">");
+    if (lastOpen > lastClose) {
+      const nextClose = fullHtml.indexOf(">", lastOpen);
+      if (nextClose !== -1) {
+        charIndex = nextClose + 1;
+        safeSubstr = fullHtml.slice(0, charIndex);
+      }
+    }
+
+    element.innerHTML = safeSubstr + '<span class="typewriter-cursor"></span>';
+    conversation.scrollTop = conversation.scrollHeight;
+
+    if (charIndex >= totalChars) {
+      clearInterval(timer);
+      element.innerHTML = fullHtml;
+      if (onComplete) onComplete();
+    }
+  }, 18);
+}
+
+function renderReferencesDrawer(parent, references) {
+  if (!references || !references.length) return;
+  const details = document.createElement("details");
+  details.className = "references";
+  details.style.marginTop = "0.85rem";
+  details.style.fontSize = "0.85rem";
+  
+  const summary = document.createElement("summary");
+  summary.style.cursor = "pointer";
+  summary.style.fontWeight = "600";
+  summary.style.color = "var(--makerere-green, #00843d)";
+  summary.textContent = `Official Policy Sources (${references.length})`;
+  
+  const list = document.createElement("ol");
+  list.className = "references-list";
+  list.style.paddingLeft = "1.25rem";
+  list.style.marginTop = "0.5rem";
+  
+  references.forEach((ref) => {
+    const item = document.createElement("li");
+    item.style.marginBottom = "0.3rem";
+    item.textContent = ref.title ? `${ref.title} — ${ref.citation}` : ref.citation;
+    list.append(item);
+  });
+  
+  details.append(summary, list);
+  parent.append(details);
 }
 
 function addMessage(role, text, options = {}) {
@@ -200,8 +201,28 @@ function addMessage(role, text, options = {}) {
   }
 
   body.append(label);
+
   if (role === "assistant") {
-    renderAnswer(body, text, options.citations || []);
+    const { html, references } = prepareAnswerContent(text, options.citations || []);
+    const content = document.createElement("div");
+    content.className = "message-text markdown-body";
+
+    if (options.stream) {
+      createTypewriterEffect(content, html, () => {
+        renderReferencesDrawer(body, references);
+        if (options.escalation) {
+          const escalation = document.createElement("div");
+          escalation.className = "escalation";
+          escalation.textContent = `For further help, contact: ${options.escalation}`;
+          body.append(escalation);
+        }
+        conversation.scrollTop = conversation.scrollHeight;
+      });
+    } else {
+      content.innerHTML = html;
+      renderReferencesDrawer(body, references);
+    }
+    body.append(content);
   } else {
     const content = document.createElement("p");
     content.className = "message-text";
@@ -209,7 +230,7 @@ function addMessage(role, text, options = {}) {
     body.append(content);
   }
 
-  if (options.escalation) {
+  if (role !== "assistant" && options.escalation) {
     const escalation = document.createElement("div");
     escalation.className = "escalation";
     escalation.textContent = `For further help, contact: ${options.escalation}`;
@@ -245,7 +266,7 @@ function addLoadingMessage() {
   body.className = "message-body";
   const label = document.createElement("div");
   label.className = "message-label";
-  label.textContent = "Searching available guidance";
+  label.textContent = "Checking university policies";
   const dots = document.createElement("div");
   dots.className = "loading-dots";
   dots.setAttribute("aria-hidden", "true");
@@ -284,13 +305,14 @@ async function submitQuestion(question) {
       status: data.status,
       citations: Array.isArray(data.citations) ? data.citations : [],
       escalation: data.escalation_office,
+      stream: true,
     });
   } catch (error) {
     document.getElementById("loading-message")?.remove();
     addMessage(
       "assistant",
-      `I couldn’t reach the support service. ${error instanceof Error ? error.message : "Please try again in a moment."}`,
-      { status: "fallback" },
+      `I couldn't reach the support service. ${error instanceof Error ? error.message : "Please try again in a moment."}`,
+      { status: "fallback", stream: false },
     );
   } finally {
     setLoading(false);
