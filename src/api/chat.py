@@ -7,6 +7,7 @@ import uuid
 from fastapi import APIRouter
 
 from src.agent.orchestrator import AgentOrchestrator
+from src.core.memory import memory_store
 from src.safety.guardrails import InjectionDefenseGuardrail
 from src.safety.refusal_engine import NonNegotiableRefusalEngine
 from src.schemas.api import ChatRequest, ChatResponse
@@ -28,10 +29,13 @@ def handle_chat_query(payload: ChatRequest) -> ChatResponse:
     refusal = _refusal_engine.evaluate(payload.query)
     if refusal.refused:
         latency = (time.perf_counter() - start_time) * 1000.0
+        refusal_msg = refusal.refusal_response or "Request refused under Makerere University policy."
+        memory_store.add_message(session_id, "user", payload.query)
+        memory_store.add_message(session_id, "assistant", refusal_msg)
         return ChatResponse(
             status="refused",
             query=payload.query,
-            response=refusal.refusal_response or "Request refused under Makerere University policy.",
+            response=refusal_msg,
             citations=[],
             session_id=session_id,
             state="INSTITUTIONAL_REFUSAL",
@@ -45,10 +49,11 @@ def handle_chat_query(payload: ChatRequest) -> ChatResponse:
     safety_check = _guardrail.inspect_input(payload.query)
     if not safety_check.allowed:
         latency = (time.perf_counter() - start_time) * 1000.0
+        blocked_msg = safety_check.refusal_message or "Request blocked by safety guardrails."
         return ChatResponse(
             status="refused",
             query=payload.query,
-            response=safety_check.refusal_message or "Request blocked by safety guardrails.",
+            response=blocked_msg,
             citations=[],
             session_id=session_id,
             state="SAFETY_BLOCKED",
@@ -58,17 +63,25 @@ def handle_chat_query(payload: ChatRequest) -> ChatResponse:
             safety_category=safety_check.category,
         )
 
-    # Step 3: Bounded Plan-Act-Observe Execution Loop
+    # Step 3: Fetch multi-turn conversation history for this session
+    conversation_history = memory_store.get_formatted_history(session_id)
+
+    # Step 4: Bounded Plan-Act-Observe Execution Loop with multi-turn history
     run_result = _orchestrator.run(
         user_query=payload.query,
         session_id=session_id,
+        history=conversation_history,
     )
 
-    # Step 4: Post-inference Output Leak Scanning
+    # Step 5: Post-inference Output Leak Scanning
     output_check = _guardrail.inspect_output(run_result.final_answer)
     answer = run_result.final_answer
     if not output_check.allowed:
         answer = output_check.sanitized_output or output_check.refusal_message or answer
+
+    # Step 6: Persist the completed turn into session memory
+    memory_store.add_message(session_id, "user", payload.query)
+    memory_store.add_message(session_id, "assistant", answer)
 
     latency = (time.perf_counter() - start_time) * 1000.0
     return ChatResponse(
