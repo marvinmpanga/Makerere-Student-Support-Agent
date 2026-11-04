@@ -24,6 +24,35 @@ from src.agent.guardrails import (
 )
 from src.core.dispatcher import ToolDispatcher, ToolTelemetryRecord
 
+# Lazily imported so the module loads fine without GEMINI_API_KEY (tests, CI)
+_gemini_client = None
+
+
+def _get_gemini_client():
+    global _gemini_client
+    if _gemini_client is not None:
+        return _gemini_client
+    try:
+        from src.core.llm import GeminiBaselineClient
+
+        _gemini_client = GeminiBaselineClient()
+    except Exception:
+        _gemini_client = None
+    return _gemini_client
+
+
+_SYNTHESIS_SYSTEM_PROMPT = """You are the Makerere University Student Support and Onboarding Triage Agent.
+
+Your goal is to provide clear, helpful, well-structured, student-friendly guidance based ONLY on official Makerere University policy context.
+
+Strict rules:
+1. Grounding: Rely strictly on the provided policy context. Never hallucinate rules, deadlines, or requirements.
+2. Tone and Format: Be courteous, professional, and clear. Format your answer with clean paragraphs and markdown bullet points where appropriate so it is easy to read.
+3. Citations: Support specific policy claims with the relevant citation tags already in the context (e.g. [mak-policy-0043, Pages 52-54]).
+4. Policy Boundaries: Never make disciplinary, fee-waiver, admission, or grade-change decisions. If an action requires official administrative approval, instruct the student on which university office to contact.
+5. If the context does not fully answer the question, clearly state the limitations and advise the student to consult the Academic Registrar or relevant department."""
+
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_AGENT_LOG = PROJECT_ROOT / "evidence" / "traces" / "agent_loop.jsonl"
 
@@ -148,6 +177,27 @@ class AgentOrchestrator:
                 "citations": [],
             }
 
+        # Try Gemini synthesis first for clean, human-readable student guidance
+        gemini = _get_gemini_client()
+        if gemini is not None:
+            cits_str = ", ".join(citations)
+            synthesis_input = (
+                f"VERIFIED MAKERERE POLICY CONTEXT:\n{context}\n\n"
+                f"STUDENT QUESTION: {user_query}\n\n"
+                f"AVAILABLE CITATIONS: {cits_str}"
+            )
+            result = gemini.generate_response(
+                system_instruction=_SYNTHESIS_SYSTEM_PROMPT,
+                user_query=synthesis_input,
+            )
+            if result.get("status") == "success" and result.get("response_text", "").strip():
+                return {
+                    "thought": f"Synthesized grounded answer via Gemini using citations {citations}.",
+                    "final_answer": result["response_text"].strip(),
+                    "citations": citations,
+                }
+
+        # Deterministic fallback when offline or LLM client unavailable
         return {
             "thought": f"Synthesize grounded answer using retrieved citations {citations}.",
             "final_answer": (

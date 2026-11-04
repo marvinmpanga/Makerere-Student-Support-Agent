@@ -105,75 +105,62 @@ function citationKey(value) {
 }
 
 function renderAnswer(parent, text, citations) {
-  const citationPattern = /\[([^\]\n]{1,140}\b(?:pages?|p\.)\s*\d+[^\]\n]*)\]/gi;
-  const matches = [...text.matchAll(citationPattern)];
-  const references = citations.map((citation) => ({ citation: String(citation), title: "" }));
+  const citationPattern = /\[([A-Za-z0-9_\-]+,\s*Pages?\s+\d+(?:-\d+)?)\]/gi;
+  const references = (citations || []).map((citation) => ({
+    citation: String(citation).replace(/^\[|\]$/g, ""),
+    title: "",
+  }));
 
-  if (!matches.length) {
-    appendFormattedText(parent, text);
-  } else {
-    let intro = text.slice(0, matches[0].index || 0).trim();
-    intro = intro.replace(/^according to official makerere university policy:\s*/i, "");
-    if (intro) appendFormattedText(parent, intro);
+  // Clean raw prefixes if present
+  let cleanText = text.trim();
+  const rawPrefix = /^According to official Makerere University policy:\s*/i;
+  const rawPrefix2 = /^Based on official Makerere University policy[,:]?\s*(here is the relevant guidance[^:]*:\s*)?/i;
+  cleanText = cleanText.replace(rawPrefix, "").replace(rawPrefix2, "");
 
-    matches.forEach((match, index) => {
-      const citation = match[1].trim();
-      const start = (match.index || 0) + match[0].length;
-      const end = index + 1 < matches.length ? matches[index + 1].index : text.length;
-      let sourceTitle = "";
-      let excerpt = text.slice(start, end).replace(/^\s*\(([^)\n]+)\)\s*:?\s*/, (_, title) => {
-        sourceTitle = title.trim();
-        return "";
-      });
-      excerpt = excerpt.replace(/\n*\s*Sources?:[\s\S]*$/i, "").trim();
+  // Strip trailing "Sources: ..." list from the body because we display references separately
+  cleanText = cleanText.replace(/\n*\s*\*\*Sources:\*\*[\s\S]*$/i, "");
+  cleanText = cleanText.replace(/\n*\s*Sources?:\s*\[?[mak-policy-[\s\S]*$/i, "");
 
-      let referenceIndex = references.findIndex((reference) => citationKey(reference.citation) === citationKey(`[${citation}]`));
-      if (referenceIndex < 0) {
-        referenceIndex = references.findIndex((reference) => citationKey(reference.citation).includes(citationKey(citation).split("pages")[0]));
+  // Map any inline citations to clean numerical footnotes
+  let footnoteMap = new Map();
+  cleanText = cleanText.replace(citationPattern, (match, tag) => {
+    let cleanTag = tag.trim();
+    if (!footnoteMap.has(cleanTag)) {
+      let refIdx = references.findIndex((r) => r.citation.toLowerCase() === cleanTag.toLowerCase());
+      if (refIdx < 0) {
+        references.push({ citation: cleanTag, title: "" });
+        refIdx = references.length - 1;
       }
-      if (referenceIndex < 0) {
-        references.push({ citation: `[${citation}]`, title: "" });
-        referenceIndex = references.length - 1;
-      }
-      if (sourceTitle && !references[referenceIndex].title) references[referenceIndex].title = sourceTitle;
+      footnoteMap.set(cleanTag, refIdx + 1);
+    }
+    const num = footnoteMap.get(cleanTag);
+    return ` **[${num}]**`;
+  });
 
-      if (!excerpt) return;
-      const card = document.createElement("div");
-      card.className = "policy-excerpt";
-      const heading = document.createElement("div");
-      heading.className = "excerpt-heading";
-      const label = document.createElement("span");
-      label.textContent = "POLICY EXCERPT";
-      heading.append(label);
-      if (sourceTitle) {
-        const title = document.createElement("span");
-        title.className = "excerpt-title";
-        title.textContent = sourceTitle;
-        heading.append(title);
-      }
-      const marker = document.createElement("span");
-      marker.className = "source-marker";
-      marker.textContent = `[${referenceIndex + 1}]`;
-      heading.append(marker);
-      const content = document.createElement("div");
-      content.className = "message-text";
-      appendFormattedText(content, excerpt);
-      card.append(heading, content);
-      parent.append(card);
-    });
-  }
+  // Render the formatted answer
+  appendFormattedText(parent, cleanText);
 
+  // Render references in a neat collapsible section
   if (references.length) {
     const details = document.createElement("details");
     details.className = "references";
+    details.style.marginTop = "0.75rem";
+    details.style.fontSize = "0.85rem";
     const summary = document.createElement("summary");
-    summary.textContent = `References (${references.length})`;
+    summary.style.cursor = "pointer";
+    summary.style.fontWeight = "600";
+    summary.style.color = "var(--color-primary, #006633)";
+    summary.textContent = `Official Policy Sources (${references.length})`;
     const list = document.createElement("ol");
     list.className = "references-list";
+    list.style.paddingLeft = "1.25rem";
+    list.style.marginTop = "0.4rem";
     references.forEach((reference) => {
       const item = document.createElement("li");
-      const citation = reference.citation.replace(/^\[|\]$/g, "");
-      item.textContent = reference.title ? `${reference.title} — ${citation}` : citation;
+      item.style.marginBottom = "0.25rem";
+      item.textContent = reference.title
+        ? `${reference.title} - ${reference.citation}`
+        : reference.citation;
       list.append(item);
     });
     details.append(summary, list);
