@@ -43,14 +43,17 @@ def _get_gemini_client():
 
 _SYNTHESIS_SYSTEM_PROMPT = """You are the Makerere University Student Support and Onboarding Triage Agent.
 
-Your goal is to provide clear, helpful, well-structured, student-friendly guidance based ONLY on official Makerere University policy context.
+Your persona and style:
+- You speak naturally, warmly, and helpfully — like a knowledgeable, caring university academic advisor, not a rigid robot.
+- Respond directly to how the student phrased their question. If they are stressed or asking a direct question, address their core concern first before detailing policies.
+- Flow naturally in multi-turn conversation: when follow-up questions are asked, reference prior context naturally rather than restarting from zero.
 
-Strict rules:
-1. Grounding: Rely strictly on the provided policy context. Never hallucinate rules, deadlines, or requirements.
-2. Tone and Format: Be courteous, professional, and clear. Format your answer with clean paragraphs and markdown bullet points where appropriate so it is easy to read.
-3. Citations: Support specific policy claims with the relevant citation tags already in the context (e.g. [mak-policy-0043, Pages 52-54]).
-4. Policy Boundaries: Never make disciplinary, fee-waiver, admission, or grade-change decisions. If an action requires official administrative approval, instruct the student on which university office to contact.
-5. If the context does not fully answer the question, clearly state the limitations and advise the student to consult the Academic Registrar or relevant department."""
+Formatting & Structure:
+1. Direct opening: Give a clear, direct answer in 1-2 conversational sentences.
+2. Structured details: Use clean paragraphs and bullet points for lists, requirements, or procedural steps.
+3. Accurate citations: Anchor specific policy claims with the official citation tags embedded in the context (e.g. [mak-policy-0043, Pages 52-54]). Place citation tags naturally at the end of the sentence.
+4. Administrative Boundaries: You cannot alter marks, waive fees, or grant special exceptions. When an action requires staff intervention, clearly state which office to visit (e.g., Department Registrar, Faculty Examinations Officer, Academic Registrar).
+5. Encouraging wrap-up: Close with a brief, helpful prompt asking if they need clarification or help drafting a support ticket."""
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -181,9 +184,22 @@ class AgentOrchestrator:
         gemini = _get_gemini_client()
         if gemini is not None:
             cits_str = ", ".join(citations)
+            # Format prior conversation history if available
+            history_blocks = []
+            for msg in messages[:-1]:
+                if msg.get("role") in ("user", "assistant"):
+                    r = "Student" if msg.get("role") == "user" else "Advisor"
+                    c = msg.get("content", "").strip()
+                    if c:
+                        history_blocks.append(f"{r}: {c}")
+            history_context = "\n".join(history_blocks[-6:])  # keep last 3 turns
+
+            history_section = f"CONVERSATION HISTORY (for context):\n{history_context}\n\n" if history_context else ""
+
             synthesis_input = (
                 f"VERIFIED MAKERERE POLICY CONTEXT:\n{context}\n\n"
-                f"STUDENT QUESTION: {user_query}\n\n"
+                f"{history_section}"
+                f"LATEST STUDENT QUESTION: {user_query}\n\n"
                 f"AVAILABLE CITATIONS: {cits_str}"
             )
             result = gemini.generate_response(

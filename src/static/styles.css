@@ -118,10 +118,10 @@ h1 { margin: 13px 0 8px; color: #26332b; font-size: clamp(24px, 3vw, 33px); font
 .message-body { min-width: 0; max-width: min(100% - 38px, 690px); }
 .message.user .message-body { max-width: min(84%, 570px); padding: 10px 14px; border: 1px solid #dcebdd; border-radius: 15px 15px 4px 15px; background: #eef6ef; }
 .message-label { display: flex; align-items: center; gap: 8px; margin: 2px 0 6px; color: #536057; font-size: 10px; font-weight: 700; }
-.message-text { margin: 0; color: #333e36; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 12px; line-height: 1.75; }
+.message-text { margin: 0; color: #333e36; overflow-wrap: anywhere; white-space: pre-wrap; font-size: 13.5px; line-height: 1.68; }
 .message-text p { margin: 0 0 10px; }
 .message-text p:last-child { margin-bottom: 0; }
-.message-text h3 { margin: 14px 0 7px; color: #26372b; font-size: 13px; }
+.message-text h3 { margin: 14px 0 7px; color: #26372b; font-size: 14.5px; }
 .message-text ul, .message-text ol { display: grid; gap: 5px; margin: 5px 0 10px; padding-left: 21px; }
 .status-pill { padding: 3px 6px; border-radius: 20px; color: var(--makerere-green-dark); background: #e9f4eb; font-size: 8px; font-weight: 750; text-transform: uppercase; letter-spacing: .45px; }
 .status-pill.refused { color: #9d1c30; background: #fbebed; }
